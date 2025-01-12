@@ -24,8 +24,15 @@ export interface ScheduleProps {
 }
 
 function Schedule(props: ScheduleProps) {
-    const [weekStart, setWeekStart] = useState(DateTime.now().startOf("week").toJSDate())
-    const [selectedDayStart, setSelectedDayStart] = useState(DateTime.now().startOf('day').toJSDate())
+
+    const [weekStart, setWeekStart] = useState(DateTime.now().weekday === 7 ?
+        DateTime.now().startOf("week").plus({ week: 1 }).toJSDate()
+        : DateTime.now().startOf("week").toJSDate())
+
+    const [selectedDayStart, setSelectedDayStart] = useState(
+        DateTime.now().weekday === 7 ?
+            DateTime.now().startOf('day').plus({ day: 1 }).toJSDate()
+            : DateTime.now().startOf('day').toJSDate())
 
     const [_, { data }] = api.schedule.get.useSuspenseQuery({
         groupId: props.type === 'student' ? props.groupId : undefined,
