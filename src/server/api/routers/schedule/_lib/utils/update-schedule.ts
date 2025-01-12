@@ -41,7 +41,6 @@ export default async function updateSchedule(schedule: LessonParsed[]) {
 
     const difference = await getScheduleDifference(schedule)
 
-
     const result: ResultItem[] = []
 
     for (let lesson of difference) {
@@ -461,7 +460,11 @@ export default async function updateSchedule(schedule: LessonParsed[]) {
         teachersToNotify.add(report.inputItem?.Teacher?.name || report.inputItem?.teacher)
     }
 
-    await notify(Array.from(teachersToNotify).filter(e => e), Array.from(groupsToNotify).filter(e => e))
-
+    try {
+        await notify(Array.from(teachersToNotify).filter(e => e), Array.from(groupsToNotify).filter(e => e))
+    } catch (e) {
+        console.error('Ошибка отправки уведомлений: ' + e.message)
+    }
+ 
     return result
 }
