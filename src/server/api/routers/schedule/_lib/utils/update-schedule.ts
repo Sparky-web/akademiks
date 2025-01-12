@@ -82,7 +82,7 @@ export default async function updateSchedule(schedule: LessonParsed[]) {
                         Classroom: {
                             connectOrCreate: {
                                 where: {
-                                    name: lesson.to.classroom 
+                                    name: lesson.to.classroom
                                 },
                                 create: {
                                     name: lesson.to.classroom
@@ -453,7 +453,7 @@ export default async function updateSchedule(schedule: LessonParsed[]) {
 
     const groupsToNotify = new Set<string>()
     const teachersToNotify = new Set<string>()
-    
+
     for (let report of result) {
         groupsToNotify.add(report.item.Group?.title || report.item.group)
         groupsToNotify.add(report.inputItem?.Group?.title || report.inputItem?.group)
@@ -461,7 +461,7 @@ export default async function updateSchedule(schedule: LessonParsed[]) {
         teachersToNotify.add(report.inputItem?.Teacher?.name || report.inputItem?.teacher)
     }
 
-    await notify(Array.from(teachersToNotify), Array.from(groupsToNotify))
+    await notify(Array.from(teachersToNotify).filter(e => e), Array.from(groupsToNotify).filter(e => e))
 
     return result
 }
