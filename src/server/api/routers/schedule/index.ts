@@ -47,7 +47,20 @@ export default createTRPCRouter({
 
     update: protectedProcedure.input(z.any()).mutation(async ({ ctx, input }) => {
         if (!ctx.session?.user?.isAdmin) throw new TRPCClientError('Доступ запрещен')
-        return await updateSchedule(input)
+
+        const startedAt = DateTime.now().toJSDate()
+
+        const report = await updateSchedule(input)
+        
+        await ctx.db.report.create({
+            data: {
+                startedAt,
+                endedAt: DateTime.now().toJSDate(),
+                result: JSON.stringify(report)
+            }
+        })
+
+        return report
     }),
 
     difference: publicProcedure.input(z.any()).mutation(async ({ ctx, input }) => {
