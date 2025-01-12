@@ -7,6 +7,7 @@ import { cn } from "~/lib/utils";
 import { Lesson, Schedule } from "~/types/schedule";
 import useActiveLessonId from "../utils/use-active-lesson-id";
 import ActiveIndicatiorDesktop from "./lesson/active-indicator-desktop";
+import DesktopLesson from "./lesson/desktop-lesson";
 
 interface ScheduleProps {
     schedule: Schedule
@@ -64,37 +65,9 @@ export default function DesktopSchedule(props: ScheduleProps) {
                                     return <TableCell key={dayI} className="min-w-[250px] min-h-[150px] h-[150px] align-top p-3 border-x-border border">
                                         <div className="grid content-between h-full items-between">
                                             <div className="flex gap-1">
-                                                {lessons.length === 1 ? <div className="flex-1 grid content-start items-start">
-                                                    <div className="font-medium text-sm ">{lessons[0].title}</div>
-                                                    <div className="text-xs text-muted-foreground mt-1">
-                                                        {formatTime(lessons[0].start)} - {formatTime(lessons[0].end)}
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground">
-                                                        {lessons[0].Classroom.name}, {props.schedule.type ==='student' ? lessons[0].Teacher.name : lessons[0].Group?.title}
-                                                    </div>
-                                                    {lessons[0].subgroup && <div className="text-xs font-medium">Подгруппа {lessons[0].subgroup}</div>}
-                                                </div> : lessons.map((lesson, index) => (
-                                                    <div key={index} className="flex-1">
-                                                        <TooltipProvider>
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <div className="font-medium text-sm line-clamp-3">{lesson.title}</div>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    {lesson.title}
-                                                                </TooltipContent>
-                                                            </Tooltip>
-                                                        </TooltipProvider>
-                                                        <div className="text-xs text-muted-foreground mt-1">
-                                                            {formatTime(lesson.start)} - {formatTime(lesson.end)}
-                                                        </div>
-                                                        <div className="text-xs text-muted-foreground">
-                                                            {lesson.Classroom.name}, {props.schedule.type ==='student' ? lesson.Teacher.name : lesson.Group?.title}
-                                                        </div>
-                                                        {lesson.subgroup && <div className="text-xs font-medium">Подгруппа {lesson.subgroup}</div>}
-                                                    </div>
+                                                {!!lessons.length && lessons.map((lesson, index) => (
+                                                    <DesktopLesson key={index} lesson={{...lesson, type: props.schedule.type}} />
                                                 ))}
-
 
                                                 {!lessons.length && <span className="text-xs text-muted-foreground">нет пары</span>}
                                             </div>

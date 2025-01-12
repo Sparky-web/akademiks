@@ -451,9 +451,9 @@ export default async function updateSchedule(schedule: LessonParsed[]) {
         // await pMap(schedule, _updateSchedule, { concurrency: 1 })
     }
 
-
     const groupsToNotify = new Set<string>()
     const teachersToNotify = new Set<string>()
+    
     for (let report of result) {
         groupsToNotify.add(report.item.Group?.title || report.item.group)
         groupsToNotify.add(report.inputItem?.Group?.title || report.inputItem?.group)

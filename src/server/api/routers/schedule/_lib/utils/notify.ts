@@ -39,10 +39,10 @@ export default async function notify(teachers: string[], groups: string[]) {
 
     for (let user of users) {
         try {
-        const title = 'Изменения в расписании'
-        const body = user.role === 1 ? `Расписание группы ${user.Group?.title} изменено` : `Расписание ${user.Teacher?.name} изменено`
-        await sendNotification(user.id, title, body)
-        } catch(e) {
+            const title = 'Изменения в расписании'
+            const body = user.role === 1 ? `Расписание группы ${user.Group?.title} изменено` : `Расписание ${user.Teacher?.name} изменено`
+            await sendNotification(user.id, title, body)
+        } catch (e) {
             console.error('Ошибка отправки уведомления пользователю: ' + user.email + ' - ' + e.message)
         }
     }

@@ -5,7 +5,13 @@ export type Schedule = Awaited<ReturnType<typeof schedule.get>>
 
 export type Day = Schedule['data'][number]
 
-export type Lesson = Schedule['data'][number]['lessons'][number]
+export type Lesson = Prisma.LessonGetPayload<{
+    include: {
+        Classroom: true,
+        Teacher: true,
+        Group: true
+    }
+}>
 
 export type Teacher = Pick<User, 'id' | 'name'>
 

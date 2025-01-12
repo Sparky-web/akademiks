@@ -9,6 +9,7 @@ import users from "./routers/users";
 import reports from "./routers/reports";
 import { errorReportRouter } from "./routers/errors";
 import push from "./routers/push";
+import handbooks from "./routers/handbooks";
 
 /**
  * This is the primary router for your server.
@@ -25,7 +26,8 @@ export const appRouter = createTRPCRouter({
   teachers: teachersRouter,
   users: users,
   schedule,
-  push
+  push,
+  handbooks
 });
 
 // export type definition of API

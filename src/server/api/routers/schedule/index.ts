@@ -42,9 +42,7 @@ export default createTRPCRouter({
         else if (input.teacherId) {
             return await getTeacherSchedule(input.teacherId, input.weekStart)
         }
-        else {
-            throw new TRPCClientError('Не указан ни groupId, ни teacherId')
-        }
+        throw new TRPCClientError('Не указан ни groupId, ни teacherId')
     }),
 
     update: protectedProcedure.input(z.any()).mutation(async ({ ctx, input }) => {

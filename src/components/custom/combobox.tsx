@@ -21,28 +21,35 @@ import {
 import { useRef } from "react"
 
 
+type ComboboxItem = {
+  value: string,
+  label: string
+} | {
+  label: string
+  values: ComboboxItem[]
+}
+
 interface ComboboxProps {
-  data: {
-    value: string,
-    label: string
-  }[],
+  data: ComboboxItem[],
+  size?: 'sm' | 'base'
   value: string | null,
+  modal?: boolean
   onChange: (value: string | null) => void
 }
 
-export function Combobox({data, value, onChange}: ComboboxProps) {
+export function Combobox({ data, value, onChange, modal = false, size = 'base' }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
 
   const ref = useRef()
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={modal}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between text-base h-12 font-normal px-3"
+          className={cn("w-full justify-between text-base h-12 font-normal px-3", size === 'sm' && 'text-xs h-7 px-2')}
           ref={ref}
         >
           {value
@@ -53,37 +60,70 @@ export function Combobox({data, value, onChange}: ComboboxProps) {
       </PopoverTrigger>
       <PopoverContent className="p-0" style={{
         width: ref.current?.clientWidth,
+        minWidth: '300px'
       }}>
-        <Command >
-          <CommandInput placeholder="Поиск..." />
+        <Command>
+          <CommandInput placeholder="Поиск..." className={cn("text-sm", size === 'sm' && 'text-sm')} />
           <CommandList className="max-md:max-h-[200px]">
             <CommandEmpty>Ничего не найдено</CommandEmpty>
-            <CommandGroup>
-              {data.map((item) => (
+            {data.map((item) => {
+              if ('values' in item) {
+                return (
+                  <CommandGroup key={item.label} heading={item.label}>
+                    {item.values.map((_item) => (
+                      <CommandItem
+                        className={cn("text-base font-medium", size === 'sm' && 'text-xs')}
+                        key={_item.value}
+                        value={_item.label}
+                        onSelect={(currentValue) => {
+                          const _value = data.find((_item) => item.label === _item.label)?.value
+                          if (!_value) return
+
+                          onChange(value === _value ? null : _value)
+                          setOpen(false)
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4 min-w-4",
+                            value === _item.value ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {_item.label}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )
+              }
+
+              return (
                 <CommandItem
                   key={item.value}
                   value={item.label}
+                  className={cn("text-base font-medium", size === 'sm' && 'text-xs')}
                   onSelect={(currentValue) => {
                     const _value = data.find((_item) => item.label === _item.label)?.value
-                    if(!_value) return
-                    
+                    if (!_value) return
+
                     onChange(value === _value ? null : _value)
                     setOpen(false)
                   }}
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4",
+                      "mr-2 h-4 w-4 min-w-4",
                       value === item.value ? "opacity-100" : "opacity-0"
                     )}
                   />
                   {item.label}
                 </CommandItem>
-              ))}
-            </CommandGroup>
+              )
+            })}
           </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
   )
 }
+
+

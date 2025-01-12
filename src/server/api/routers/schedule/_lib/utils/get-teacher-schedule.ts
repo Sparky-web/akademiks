@@ -1,3 +1,4 @@
+import { Lesson } from "@prisma/client"
 import DateTime from "~/lib/utils/datetime"
 import { db } from "~/server/db"
 
@@ -77,7 +78,7 @@ const getTeacherSchedule = async (teacherId: string, weekStart: Date) => {
 
     const days: {
         start: Date,
-        lessons: any[]
+        lessons: Lesson[]
     }[] = []
 
     for (let lesson of data) {
