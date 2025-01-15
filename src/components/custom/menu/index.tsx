@@ -1,5 +1,5 @@
 'use client'
-import { CalendarDays, Home, User, Upload, Users, File, AlertCircleIcon } from "lucide-react";
+import { CalendarDays, Home, User, Upload, Users, File, AlertCircleIcon, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FC, ReactElement, ReactNode } from "react";
@@ -67,6 +67,24 @@ export default function Menu() {
             title: 'Отчеты об ошибках',
             path: '/lk/error-reports',
             icon: AlertCircleIcon
+        })
+
+        desktopMenu.push({
+            title: 'Группы',
+            path: '/lk/groups',
+            icon: Users
+        })
+
+        desktopMenu.push({
+            title: 'Преподаватели',
+            path: '/lk/teachers',
+            icon: User
+        })
+
+        desktopMenu.push({
+            title: 'Предметы',
+            path: '/lk/subjects',
+            icon: BookOpen
         })
     }
 

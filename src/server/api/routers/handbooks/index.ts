@@ -55,7 +55,7 @@ export default createTRPCRouter({
                 ORDER BY 
                     c DESC;`
 
-            
+
             allLessons = allLessons.filter(e => !targetLessons?.find(e2 => e2.title === e.title))
 
             return [
@@ -74,5 +74,69 @@ export default createTRPCRouter({
                     }))
                 }
             ]
+        }),
+    getTeachers: protectedProcedure
+        .input(z.object({
+            lessonTitle: z.string().optional(),
+        }))
+        .query(async ({ ctx, input }) => {
+            if (!ctx.session?.user?.isAdmin) throw new Error('Доступ запрещен')
+
+            const teachers = await ctx.db.teacher.findMany({
+                orderBy: {
+                    name: 'asc'
+                },
+                where: {
+                    Lesson: {
+                        some: {
+                            title: {
+                                contains: input.lessonTitle
+                            }
+                        }
+                    },
+                }
+            })
+
+            let allTeachers = await ctx.db.teacher.findMany({
+                orderBy: {
+                    name: 'asc'
+                },
+            })
+
+            allTeachers = allTeachers.filter(e => !teachers.find(e2 => e2.name === e.name))
+
+
+            return [
+                ...(teachers?.length ? [{
+                    label: 'Преподаватели с предметом ' + input.lessonTitle,
+                    values: teachers.map(e => ({
+                        label: e.name,
+                        value: e.name
+                    }))
+                }] : []),
+                {
+                    label: 'Все преподаватели',
+                    values: allTeachers.map(e => ({
+                        label: e.name,
+                        value: e.name
+                    }))
+                }
+            ]
+
+        }),
+    getClassrooms: protectedProcedure
+        .query(async ({ ctx, input }) => {
+            if (!ctx.session?.user?.isAdmin) throw new Error('Доступ запрещен')
+
+            const classrooms = await ctx.db.classroom.findMany({
+                orderBy: {
+                    name: 'asc'
+                },
+            })
+
+            return classrooms.map(e => ({
+                label: e.name,
+                value: e.name
+            }))
         })
 });

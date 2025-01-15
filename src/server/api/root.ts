@@ -10,6 +10,7 @@ import reports from "./routers/reports";
 import { errorReportRouter } from "./routers/errors";
 import push from "./routers/push";
 import handbooks from "./routers/handbooks";
+import table from "./routers/table";
 
 /**
  * This is the primary router for your server.
@@ -27,6 +28,7 @@ export const appRouter = createTRPCRouter({
   users: users,
   schedule,
   push,
+  table,
   handbooks
 });
 

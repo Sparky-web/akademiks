@@ -34,8 +34,8 @@ export default function UserTable() {
     const [_, { data }] = api.users.get.useSuspenseQuery({
       start: page * 10,
       limit: 10,
-      sortBy: sortColumn,
-      sortDirection: sortDirection,
+      orderBy: sortColumn,
+      orderDirection: sortDirection,
     })
   
     const users = data?.users || []

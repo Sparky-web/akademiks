@@ -6,6 +6,7 @@ import { api } from "~/trpc/server"
 import DateTime from "~/lib/utils/datetime"
 import Menu from "../../components/custom/menu"
 import InstallProvider from "./_lib/providers/install"
+import { Toaster } from "~/components/ui/toaster"
 
 export default async function LkLayout({ children }: { children: React.ReactNode }) {
     const session = await getServerAuthSession()
@@ -27,6 +28,7 @@ export default async function LkLayout({ children }: { children: React.ReactNode
                     <div className="lg:h-full lg:overflow-y-auto lg:py-8 lg:px-10 lg:relative">
                         {children}
                     </div>
+                    {/* <Toaster /> */}
                     {/* </Suspense> */}
                 </InstallProvider>
             </SetUserProvider>

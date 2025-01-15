@@ -33,14 +33,17 @@ interface ComboboxProps {
   data: ComboboxItem[],
   size?: 'sm' | 'base'
   value: string | null,
+  className?: string
   modal?: boolean
   onChange: (value: string | null) => void
 }
 
-export function Combobox({ data, value, onChange, modal = false, size = 'base' }: ComboboxProps) {
+export function Combobox({ data, value, onChange, modal = false, size = 'base', className }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
 
   const ref = useRef()
+
+  const itemsToFind = data.flatMap(e => 'values' in e ? e.values : [e])
 
   return (
     <Popover open={open} onOpenChange={setOpen} modal={modal}>
@@ -49,12 +52,14 @@ export function Combobox({ data, value, onChange, modal = false, size = 'base' }
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between text-base h-12 font-normal px-3", size === 'sm' && 'text-xs h-7 px-2')}
+          className={cn("w-full justify-between text-base h-12 font-normal px-3 max-w-full", size === 'sm' && 'text-xs h-7 px-2', className)}
           ref={ref}
         >
-          {value
-            ? data.find((item) => item.value === value)?.label
-            : "Выберите..."}
+          <div className="line-clamp-1 break-words max-w-full">
+            {value
+              ? itemsToFind.find((item) => item.value === value)?.label
+              : "Выберите..."}
+          </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -76,7 +81,8 @@ export function Combobox({ data, value, onChange, modal = false, size = 'base' }
                         key={_item.value}
                         value={_item.label}
                         onSelect={(currentValue) => {
-                          const _value = data.find((_item) => item.label === _item.label)?.value
+                          const _value = itemsToFind.find((_item) =>currentValue === _item.value)?.value
+
                           if (!_value) return
 
                           onChange(value === _value ? null : _value)
@@ -102,7 +108,7 @@ export function Combobox({ data, value, onChange, modal = false, size = 'base' }
                   value={item.label}
                   className={cn("text-base font-medium", size === 'sm' && 'text-xs')}
                   onSelect={(currentValue) => {
-                    const _value = data.find((_item) => item.label === _item.label)?.value
+                    const _value = itemsToFind.find((_item) => item.label === _item.label)?.value
                     if (!_value) return
 
                     onChange(value === _value ? null : _value)
