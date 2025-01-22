@@ -8,7 +8,7 @@ export default function ActiveIndicatiorDesktop(props: ActiveIndicatiorProps) {
     if (DateTime.fromJSDate(start) < DateTime.now()) type = 'end'
 
     return (
-        <div className="text-primary text-xs font-medium flex gap-4 items-center mt-3">
+        <div className="text-primary text-xs font-medium flex gap-4 items-center mt-3 p-3">
 
             {type === 'start' && <>
                 начинается {formatDiff(DateTime.fromJSDate(start))}

@@ -1,9 +1,83 @@
-import config from "~/lib/utils/schedule/config";
 import flattenSchedule from "~/lib/utils/schedule/flatten-schedule";
 import getRowData from "~/lib/utils/schedule/get-row-data";
 import parseStringFromTemplate from "~/lib/utils/schedule/parse-string-from-template";
 
-export default function parseScheduleFromWorkbook(workbook: XLSX.WorkBook) {
+const config = {
+    days: {
+        title: {
+            column: 'A',
+            rowStart: 1,
+            values: "{date}  {weekday}"
+        },
+        lessons: {
+            single: {
+                title: {
+                    columnIndex: 1,
+                    rowIndex: 0
+                },
+                classroom: {
+                    columnIndex: 4,
+                    rowIndex: 0
+                },
+                teacher: {
+                    columnIndex: 1,
+                    rowIndex: 1
+                }
+            },
+            double: {
+                first: {
+                    title: {
+                        columnIndex: 1,
+                        rowIndex: 0
+                    },
+                    classroom: {
+                        columnIndex: 2,
+                        rowIndex: 0
+                    },
+                    teacher: {
+                        columnIndex: 1,
+                        rowIndex: 1
+                    }
+                },
+                second: {
+                    title: {
+                        columnIndex: 3,
+                        rowIndex: 0
+                    },
+                    classroom: {
+                        columnIndex: 4,
+                        rowIndex: 0
+                    },
+                    teacher: {
+                        columnIndex: 3,
+                        rowIndex: 1
+                    }
+                }
+            },
+            length: 2
+        },
+        rowStart: 8,
+        length: 14,
+    },
+    groups: {
+        title: {
+            rowStart: 6
+        },
+        columnStart: 'E',
+        length: 5
+    },
+    timetable: [
+        { "index": 1, "start": "08:30", "end": "10:00" },
+        { "index": 2, "start": "10:10", "end": "11:40" },
+        { "index": 3, "start": "12:10", "end": "13:40" },
+        { "index": 4, "start": "14:10", "end": "15:40" },
+        { "index": 5, "start": "16:00", "end": "17:30" },
+        { "index": 6, "start": "17:40", "end": "19:10" },
+        { "index": 7, "start": "19:20", "end": "20:50" }
+    ]
+}
+
+export default function parseScheduleFromWorkbookOld(workbook: XLSX.WorkBook) {
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
     let end = false
@@ -130,7 +204,18 @@ export default function parseScheduleFromWorkbook(workbook: XLSX.WorkBook) {
                 }
             }
 
-            group.lessons = lessons
+            group.lessons = lessons.map(e => {
+                if (e.classroom && (
+                    e.classroom.includes('Дистант')
+                    || e.classroom.includes('Спорт.зал')
+                    || e.classroom.includes('Чит. зал')
+                    || e.classroom.includes('Акт. зал')
+                    || e.classroom.includes('Студ. кл.')
+                )) {
+                    e.classroom = e.classroom.replace(/\d+/g, '')
+                }
+                return e
+            })
             delete group.rows
 
             return group;

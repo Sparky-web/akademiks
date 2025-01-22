@@ -45,6 +45,8 @@ model Lesson {
 
   Classroom   Classroom? @relation(fields: [classroomId], references: [id])
   classroomId Int?
+
+  shouldDisplayForStudents Boolean @default(true)
   // Day         Day?       @relation(fields: [dayId], references: [id])
   // dayId       Int?
 }

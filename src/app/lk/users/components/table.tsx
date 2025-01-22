@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { DateTime } from 'luxon'
+import DateTime from "~/lib/utils/datetime"
 import {
   Table,
   TableBody,

@@ -3,6 +3,7 @@
 import * as XLSX from 'xlsx';
 import fileToArrayBuffer from './file-to-array-buffer';
 import parseScheduleFromWorkbook  from '~/lib/utils/schedule/parse-schedule-from-workbook';
+import parseScheduleFromWorkbookOld from '~/lib/utils/schedule/parse-schedule-from-workbook-old';
 
 
 export interface SheetSchedule {
@@ -25,12 +26,17 @@ interface Lesson {
 
 
 export default async function parseSchedule(file: File) {
-    if (file.type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+    if (file.type !== 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' && file.type !== 'application/vnd.ms-excel') {
         throw new Error('неверный тип файла, файл должен быть в формате xlsx')
     }
 
     const data = await fileToArrayBuffer(file);
 
     const workbook = XLSX.read(data, { type: 'array' });
-    return parseScheduleFromWorkbook(workbook)
+
+    if(file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+        return parseScheduleFromWorkbook(workbook)
+    } else if(file.type === 'application/vnd.ms-excel') {
+        return parseScheduleFromWorkbookOld(workbook)
+    }
 }

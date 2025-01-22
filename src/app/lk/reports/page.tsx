@@ -11,11 +11,12 @@ import {
     TableRow,
 } from "~/components/ui/table"
 import { Button } from "~/components/ui/button"
-import { ChevronLeft, ChevronRight, FileText } from "lucide-react"
+import { AlertCircle, ChevronLeft, ChevronRight, FileText } from "lucide-react"
 // import { api } from '@/utils/api'
 import { api } from '~/trpc/react'
-import { DateTime } from "luxon"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "~/components/ui/dialog"
+import DateTime from "~/lib/utils/datetime"
+import { UpdateReport } from '~/components/custom/schedule/components/update-report'
 
 interface ResultItem {
     type: "add" | "update" | "delete"
@@ -160,13 +161,6 @@ export default function ReportTable() {
         return sortOrder === 'asc' ? <ChevronLeft className="ml-2 h-4 w-4" /> : <ChevronRight className="ml-2 h-4 w-4" />
     }
 
-    const calculateSummary = (result: string) => {
-        const items: ResultItem[] = JSON.parse(result)
-        const success = items.filter(item => item.status === 'success').length
-        const error = items.filter(item => item.status === 'error').length
-        const total = items.length
-        return { success, error, total }
-    }
 
     return (
         <div className="">
@@ -185,25 +179,32 @@ export default function ReportTable() {
                                 Окончание {renderSortIcon('endedAt')}
                             </Button>
                         </TableHead>
-                        <TableHead className="text-left">Успешно</TableHead>
-                        <TableHead className="text-left">Ошибки</TableHead>
-                        <TableHead className="text-left">Всего</TableHead>
-                        <TableHead className="text-left">Действия</TableHead>
+                        <TableHead className="text-left">Обновлений</TableHead>
+                        <TableHead className="text-left">Ошибок</TableHead>
+                        <TableHead className="text-left">Отправлено уведомлений</TableHead>
+                        <TableHead className="text-left">Ошибок уведомлений</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {reports?.map((report) => {
-                        const summary = calculateSummary(report.result)
                         return (
                             <TableRow key={report.id} className="text-sm">
-                                <TableCell className="font-medium">{report.id}</TableCell>
+                                <TableCell className="font-medium">
+                                    <div className="flex gap-2 items-center">
+                                        {(report.result.error || report.result.notificationError) &&
+                                            <AlertCircle className="h-4 w-4 text-red-500" />
+                                        }
+                                        {report.id}
+                                    </div>
+                                </TableCell>
                                 <TableCell>{formatDate(report.startedAt)}</TableCell>
                                 <TableCell>{formatDate(report.endedAt)}</TableCell>
-                                <TableCell>{summary.success}</TableCell>
-                                <TableCell>{summary.error}</TableCell>
-                                <TableCell>{summary.total}</TableCell>
+                                <TableCell>{report.result.summary.added + report.result.summary.updated + report.result.summary.deleted}</TableCell>
+                                <TableCell>{report.result.summary.errors}</TableCell>
+                                <TableCell>{report.result.summary.notificationsSent}</TableCell>
+                                <TableCell>{report.result.summary.notificationsError}</TableCell>
                                 <TableCell>
-                                    <Button variant="ghost" size="sm" onClick={() => setSelectedReport(report)}>
+                                    <Button variant="ghost" size="sm" onClick={() => setSelectedReport(report.result)}>
                                         <FileText className="h-4 w-4" />
                                     </Button>
                                 </TableCell>
@@ -221,13 +222,11 @@ export default function ReportTable() {
                     <ChevronRight className="h-4 w-4" />
                 </Button>
             </div>
-            {selectedReport && (
-                <DetailedReportModal
-                    isOpen={!!selectedReport}
-                    onClose={() => setSelectedReport(null)}
-                    report={selectedReport}
-                />
-            )}
+            {selectedReport && <UpdateReport
+                data={selectedReport}
+                isOpen={!!selectedReport}
+                onOpenChange={() => setSelectedReport(null)}
+            />}
         </div>
     )
 }

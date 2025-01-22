@@ -9,7 +9,7 @@ import fs from 'fs';
 import * as XLSX from 'xlsx';
 
 import parseScheduleFromWorkbook from "~/lib/utils/schedule/parse-schedule-from-workbook";
-import updateSchedule, { ResultItem } from "~/server/api/routers/schedule/_lib/utils/update-schedule";
+import updateSchedule, { ResultItem, UpdateReport } from "~/server/api/routers/schedule/_lib/utils/update-schedule";
 
 const scopes = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive'];
 
@@ -69,7 +69,6 @@ async function downloadSpreadsheetAsXLSX(sheetId: string) {
 export default async function parseBackground() {
     const startedAt = new Date()
 
-    console.log('Triggered parseBackground')
     const config = await db.config.findFirst({
         select: {
             parseSpreadsheetPageUrl: true,
@@ -81,7 +80,7 @@ export default async function parseBackground() {
 
     let links = await fetchPageLinks(config.parseSpreadsheetPageUrl);
 
-    const reports: ResultItem[] = []
+    const reports: UpdateReport[] = []
 
     for (const link of links) {
         const sheetId = link.match(/[-\w]{25,}/)[0];
@@ -95,19 +94,48 @@ export default async function parseBackground() {
             const buffer = await downloadSpreadsheetAsXLSX(sheetId);
             const workbook = XLSX.read(buffer, { type: 'array' });
             const data = parseScheduleFromWorkbook(workbook)
-            const result = await updateSchedule(data)
-            reports.push(...result)
+            const result = await updateSchedule(data, true)
+            reports.push(result)
         } catch (e) {
             console.error(`Ошибка при обновлении расписания: ${sheetId}`, e.message)
         }
         console.log(`Обновлено расписание: ${sheetId}`)
     }
 
+    const reportTotal: UpdateReport = {
+        summary: {
+            added: 0,
+            updated: 0,
+            deleted: 0,
+            errors: 0,
+            notificationsSent: 0,
+            notificationsError: 0,
+            groupsAffected: [],
+            teachersAffected: []
+        },
+        result: [],
+        notificationResult: []
+    }
+    for (let report of reports) {
+        reportTotal.summary.added += report.summary.added
+        reportTotal.summary.updated += report.summary.updated
+        reportTotal.summary.deleted += report.summary.deleted
+        reportTotal.summary.errors += report.summary.errors
+        reportTotal.summary.notificationsSent += report.summary.notificationsSent
+        reportTotal.summary.notificationsError += report.summary.notificationsError
+
+        reportTotal.summary.groupsAffected.push(...report.summary.groupsAffected)
+        reportTotal.summary.teachersAffected.push(...report.summary.teachersAffected)
+
+        reportTotal.result.push(...report.result)
+        reportTotal.notificationResult.push(...report.notificationResult)
+    }
+
     await db.report.create({
         data: {
             startedAt: startedAt,
             endedAt: new Date(),
-            result: JSON.stringify(reports.slice(0, 100))
+            result: JSON.stringify(reportTotal)
         }
     })
 }

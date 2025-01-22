@@ -111,14 +111,14 @@ export default createTRPCRouter({
                     label: 'Преподаватели с предметом ' + input.lessonTitle,
                     values: teachers.map(e => ({
                         label: e.name,
-                        value: e.name
+                        value: e.id
                     }))
                 }] : []),
                 {
                     label: 'Все преподаватели',
                     values: allTeachers.map(e => ({
                         label: e.name,
-                        value: e.name
+                        value: e.id
                     }))
                 }
             ]
@@ -136,7 +136,7 @@ export default createTRPCRouter({
 
             return classrooms.map(e => ({
                 label: e.name,
-                value: e.name
+                value: e.id
             }))
         })
 });

@@ -11,7 +11,6 @@ import { Button } from '~/components/ui/button'
 import { ScrollArea, ScrollBar } from '~/components/ui/scroll-area'
 
 
-
 interface ScheduleItem {
     index: number
     title: string
@@ -32,7 +31,8 @@ export function formatDate(dateString: string): string {
 }
 
 export function formatTime(dateString: string): string {
-    return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    return DateTime.fromJSDate(new Date(dateString)).toFormat('HH:mm')
+    // return new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
 function Component({ scheduleData }: { scheduleData?: ScheduleItem[] }) {

@@ -9,7 +9,7 @@ import EmptyWeek from "./components/empty-week"
 import EmptyDay from "./components/empty-day"
 import { P } from "~/components/ui/typography"
 import { withErrorBoundary } from "../../../app/_lib/utils/error-boundary"
-import DesktopSchedule from "./components/desktop"
+import DesktopSchedule from "./components/desktop-new"
 import WeekSelector from "./components/week-picker-desktop"
 import ErrorReportModal from "../errors/report-error"
 import Card from "../card"
@@ -24,7 +24,6 @@ export interface ScheduleProps {
 }
 
 function Schedule(props: ScheduleProps) {
-
     const [weekStart, setWeekStart] = useState(DateTime.now().weekday === 7 ?
         DateTime.now().startOf("week").plus({ week: 1 }).toJSDate()
         : DateTime.now().startOf("week").toJSDate())

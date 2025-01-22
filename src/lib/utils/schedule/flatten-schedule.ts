@@ -1,5 +1,7 @@
 import { SheetSchedule } from "../../../app/lk/add-schedule/_lib/utils/parse-schedule";
-import { DateTime, Duration } from "luxon";
+import { Duration } from "luxon";
+
+import DateTime from "~/lib/utils/datetime"
 import { Lesson } from "~/types/schedule";
 import config from "./config";
 

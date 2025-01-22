@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { DateTime } from 'luxon'
+import DateTime from "~/lib/utils/datetime"
 import { Button } from "~/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 

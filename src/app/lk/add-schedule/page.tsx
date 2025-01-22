@@ -12,6 +12,10 @@ import { Loader2 } from "lucide-react";
 import DifferenceView from "./_lib/componetns/difference-view";
 import { useAppSelector } from "~/app/_lib/client-store";
 import InitializationErrorCard from "~/components/custom/errors/initialization-error-card";
+import { UpdateReport } from "~/components/custom/schedule/components/update-report";
+import Visibility from "./_lib/componetns/visibility";
+import { Checkbox } from "~/components/ui/checkbox";
+import { Label } from "~/components/ui/label";
 
 export default function Page() {
     const user = useAppSelector(e => e.user?.user)
@@ -19,9 +23,14 @@ export default function Page() {
     if (!user || !user.isAdmin) return <InitializationErrorCard message={"Вы не администратор, доступ запрещен"} />
 
     const [files, setFiles] = useState<File[]>([])
+
     const [result, setResult] = useState<any>(null)
 
+    const [report, setReport] = useState<any>(null)
+
     const [difference, setDifference] = useState<any>(null)
+
+    const [displayForStudents, setDisplayForStudents] = useState(false)
 
     const { mutateAsync: updateSchedule, isPending } = api.schedule.update.useMutation()
 
@@ -40,7 +49,6 @@ export default function Page() {
                 }
             }
 
-            console.log(res)
             setResult(res)
         }
         parse()
@@ -51,6 +59,8 @@ export default function Page() {
             <PageTitle>
                 Управление расписаниями
             </PageTitle>
+
+            <Visibility />
 
             <div className="grid lg:grid-cols-2 gap-6 max-w-full">
                 <div className="grid gap-4">
@@ -71,18 +81,42 @@ export default function Page() {
 
             {difference && <DifferenceView updated={difference} />}
 
+            {!!result?.length && <div className="flex gap-2 items-center mt-3">
+                <Checkbox id="display_for_students_1" checked={displayForStudents} onCheckedChange={(checked) => setDisplayForStudents(checked)} />
+                <Label htmlFor="display_for_students_1">
+                    Показывать пары для студентов
+                </Label>
+            </div>}
+
+
             {!!result?.length && <Button
                 disabled={isPending}
-                className="mt-2 max-w-[300px]" variant="default" size="lg" onClick={() => updateSchedule(result).then(
-                    () => {
+                className="max-w-[300px]" variant="default" size="lg" onClick={async () => {
+                    setReport(null)
+
+                    try {
+                        const res = await updateSchedule({
+                            shouldDisplayForStudents: displayForStudents,
+                            updates: result
+                        })
+
                         toast.success('Расписание успешно обновлено')
                         setResult(null)
                         setFiles([])
+                        setReport(res)
+                    } catch (e) {
+                        toast.error('Ошибка обновления расписания: ' + e.message)
                     }
-                )}>
+
+                }}>
                 {isPending && <Loader2 className="animate-spin mr-2" />}
                 Загрузить расписание
             </Button>}
+
+            {report && <UpdateReport data={report}
+                isOpen={!!report}
+                onOpenChange={() => setReport(null)}
+            />}
         </div>
     )
 }

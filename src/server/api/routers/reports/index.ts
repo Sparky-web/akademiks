@@ -31,6 +31,9 @@ export default createTRPCRouter({
         },
       })
 
-      return reports
+      return reports.map(e => ({
+        ...e,
+        result: JSON.parse(e.result),
+      }))
     })
 })

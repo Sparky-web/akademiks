@@ -2,7 +2,7 @@ import { Lesson } from "@prisma/client"
 import DateTime from "~/lib/utils/datetime"
 import { db } from "~/server/db"
 
-const getStudentSchedule = async (groupId: string, weekStart: Date) => {
+const getStudentSchedule = async (groupId: string, weekStart: Date, isAdmin: boolean) => {
     const group = await db.group.findUnique({
         where: {
             id: groupId
@@ -22,7 +22,10 @@ const getStudentSchedule = async (groupId: string, weekStart: Date) => {
             start: {
                 gte: weekStart,
                 lt: DateTime.fromJSDate(weekStart).plus({ week: 1 }).toJSDate()
-            }
+            },
+            ...(!isAdmin ? {
+                shouldDisplayForStudents: true
+            } : {})
         },
         include: {
             Teacher: {

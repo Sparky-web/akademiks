@@ -44,6 +44,7 @@ export function Combobox({ data, value, onChange, modal = false, size = 'base', 
   const ref = useRef()
 
   const itemsToFind = data.flatMap(e => 'values' in e ? e.values : [e])
+  // console.log(itemsToFind)
 
   return (
     <Popover open={open} onOpenChange={setOpen} modal={modal}>
@@ -81,9 +82,8 @@ export function Combobox({ data, value, onChange, modal = false, size = 'base', 
                         key={_item.value}
                         value={_item.label}
                         onSelect={(currentValue) => {
-                          const _value = itemsToFind.find((_item) =>currentValue === _item.value)?.value
-
-                          if (!_value) return
+                          const _value = itemsToFind.find((__item) => __item.value === _item.value)?.value
+                          if (typeof _value === 'undefined') return
 
                           onChange(value === _value ? null : _value)
                           setOpen(false)
@@ -109,7 +109,7 @@ export function Combobox({ data, value, onChange, modal = false, size = 'base', 
                   className={cn("text-base font-medium", size === 'sm' && 'text-xs')}
                   onSelect={(currentValue) => {
                     const _value = itemsToFind.find((_item) => item.label === _item.label)?.value
-                    if (!_value) return
+                    if (typeof _value === 'undefined') return
 
                     onChange(value === _value ? null : _value)
                     setOpen(false)
