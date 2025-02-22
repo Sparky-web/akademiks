@@ -7,23 +7,24 @@ import { api } from "~/trpc/server"
 import AddToFavourite from "./_lib/componetns/add-to-favourite"
 
 interface SchedulePageProps {
-    params: {
+    params: Promise<{
         type: string,
         id: string
-    }
+    }>
 }
 
-export default async function SchedulePage({ params }: SchedulePageProps) {
+export default async function SchedulePage(props: SchedulePageProps) {
+    const params = await props.params;
     if (params.type === 'teacher') {
-        void await api.schedule.get.prefetch({
+        void (await api.schedule.get.prefetch({
             groupId: params.id,
             weekStart: DateTime.now().startOf('week').toJSDate(),
-        })
+        }))
     } else if (params.type === 'student') {
-        void await api.schedule.get.prefetch({
+        void (await api.schedule.get.prefetch({
             groupId: params.id,
             weekStart: DateTime.now().startOf('week').toJSDate(),
-        })
+        }))
     } else {
         throw new Error('Неверный тип расписания')
     }

@@ -122,7 +122,7 @@ export default function DesktopScheduleNew({ schedule, weekStart }: ScheduleProp
                     <TableBody>
                         {new Array(7).fill('').map((e, i) => {
                             return (
-                                <TableRow key={i} className="hover:bg-card">
+                                <TableRow key={i} className="hover:bg-inherit">
                                     <TableCell className="sticky left-0 z-10 bg-muted p-3">
                                         {i + 1}
                                     </TableCell>

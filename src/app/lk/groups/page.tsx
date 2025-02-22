@@ -17,18 +17,18 @@ export default function Page() {
                 key="id"
                 table="Group"
                 sql={`select g.id, g.title, 
-                (select count(*) from "User" u where u.groupId = g.id) as usersCount,
+                (select count(*) from "User" u where u."groupId" = g.id) as "usersCount",
              count(l.id) as lessonsCount from "Group" g
-      left join Lesson l on l.groupId = g.id
+      left join "Lesson" l on l."groupId" = g.id
       group by g.id`}
                 filters={{
                     enabled: true
                 }}
                 columns={[
                     { accessorKey: 'title', header: 'Название', enableSorting: true, },
-                    { accessorKey: 'id', header: 'ID', enableSorting: true,  },
-                    { accessorKey: 'usersCount', header: 'Пользователей', enableSorting: true,  },
-                    { accessorKey: 'lessonsCount', header: 'Всего пар', enableSorting: true,  },
+                    { accessorKey: 'id', header: 'ID', enableSorting: true, },
+                    { accessorKey: 'usersCount', header: 'Пользователей', enableSorting: true, },
+                    { accessorKey: 'lessonsCount', header: 'Всего пар', enableSorting: true, },
                 ]}
             />
         </div>

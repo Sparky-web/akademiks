@@ -2,7 +2,7 @@
 
 import { Star } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "~/app/_lib/client-store"
-import { addFavourite , removeFavourite as removeFavouriteReducer } from "~/app/_lib/client-store/_lib/slices/user"
+import { addFavourite, removeFavourite as removeFavouriteReducer } from "~/app/_lib/client-store/_lib/slices/user"
 import { ScheduleProps } from "~/components/custom/schedule"
 import { Button } from "~/components/ui/button"
 import { cn } from "~/lib/utils"
@@ -33,7 +33,7 @@ export default function AddToFavourite(props: ScheduleProps) {
     }
 
     const remove = async () => {
-        if(!favouriteFound) return
+        if (!favouriteFound) return
 
         await removeFavourite({ id: favouriteFound.id })
         dispatch(removeFavouriteReducer({ id: favouriteFound.id }))
@@ -44,7 +44,7 @@ export default function AddToFavourite(props: ScheduleProps) {
             <Button size="sm"
                 onClick={favouriteFound ? remove : add}
                 className={cn(
-                    'bg-amber-100 text-amber-600 hover:bg-amber-200'
+                    'bg-amber-600/10 text-amber-600 hover:bg-amber-600/20 ',
                 )}>
                 <Star className="w-4 h-4" fill={favouriteFound ? "currentColor" : 'transparent'} />
                 {favouriteFound ? 'в избранном' : 'в избранное'}

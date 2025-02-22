@@ -171,7 +171,7 @@ export default function LoginCard() {
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
-                                                {!!field.state.meta.errors.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.join(', ')}</p>}
+                                                {!!field.state.meta.errors.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.map(e => e?.message).join(', ')}</p>}
                                             </div>
                                         )}
                                     </form.Field>
@@ -196,7 +196,7 @@ export default function LoginCard() {
                                                                 field.handleChange(e)
                                                             }}
                                                         />
-                                                        {!!field.state.meta.errors?.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.join(', ')}</p>}
+                                                        {!!field.state.meta.errors?.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.map(e => e.message).join(', ')}</p>}
                                                     </div>
                                                 )}
                                             </form.Field>
@@ -219,7 +219,7 @@ export default function LoginCard() {
                                                             value={field.state.value}
                                                             onChange={field.handleChange}
                                                         />
-                                                        {!!field.state.meta.errors?.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.join(', ')}</p>}
+                                                        {!!field.state.meta.errors?.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.map(e => e.message).join(', ')}</p>}
                                                     </div>
                                                 )}
                                             </form.Field>

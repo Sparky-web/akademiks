@@ -1,0 +1,13 @@
+  nextjs:
+    build: .
+    container_name: nextjs
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+
+

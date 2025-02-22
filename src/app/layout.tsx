@@ -26,9 +26,6 @@ const montserrat = Montserrat({ subsets: ['latin'] });
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-
-  // await api.schedule.generate({groupId: 'is-313'})
-
   return (
     <html lang="ru" className={`${montserrat.className} `}>
       <head>
@@ -44,7 +41,7 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"></link>
       </head>
-      <body className="bg-background text-foreground">
+      <body className="bg-background text-foreground" suppressHydrationWarning>
         <div dangerouslySetInnerHTML={{
           __html: `<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-W5V8WN3GB7"></script>
@@ -56,7 +53,7 @@ export default async function RootLayout({
   gtag('config', 'G-W5V8WN3GB7');
 </script>`
         }} />
-        
+
         <TRPCReactProvider>
           <ReduxProvider>
             {children}
@@ -95,8 +92,6 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', upd
 `
         }}>
         </script>
-
-
 
         {/* <script dangerouslySetInnerHTML={{
           __html: `

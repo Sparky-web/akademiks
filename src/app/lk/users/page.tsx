@@ -21,11 +21,11 @@ export default function Page() {
             <DbTable
                 key="id"
                 table="User"
-                sql={`select u.id, case when u.role = 1 then 'Студент' else 'Преподаватель' end as role, u.name, u.email, u.isAdmin, t.name as teacherName, g.title as groupTitle, u.isNotificationsEnabled, count(ps.id) as enabledNotificationsCount from "User" u 
-      left join PushSubscription ps on ps.userId = u.id 
-      left join Teacher t on t.id = u.teacherId 
-      left join "Group" g on g.id = u.groupId
-      group by u.id`}
+                sql={`select u.id, case when u.role = 1 then 'Студент' else 'Преподаватель' end as role, u.name, u.email, u."isAdmin", t.name as "teacherName", g.title as "groupTitle", u."isNotificationsEnabled", count(ps.id) as "enabledNotificationsCount" from "User" u 
+      left join "PushSubscription" ps on ps."userId" = u.id 
+      left join "Teacher" t on t.id = u."teacherId"
+      left join "Group" g on g.id = u."groupId"
+      group by u.id, t.name, g.title`}
                 filters={{
                     enabled: true
                 }}

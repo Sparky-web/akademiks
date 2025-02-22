@@ -16,17 +16,17 @@ export default function Page() {
             <DbTable
                 key="id"
                 table="Subject"
-                sql={`select l.title, group_concat(DISTINCT t.name) as teachers , group_concat(distinct g.title) as groups from Lesson l
-left join Teacher t ON t.id = l.teacherId 
-left join "Group" g on g.id = l.groupId 
+                sql={`select l.title, group_concat(DISTINCT t.name) as teachers , group_concat(distinct g.title) as groups from "Lesson" l
+left join "Teacher" t ON t.id = l."teacherId"
+left join "Group" g on g.id = l."groupId"
 GROUP by l.title`}
                 filters={{
                     enabled: true
                 }}
                 columns={[
                     { accessorKey: 'title', header: 'Название', enableSorting: true, },
-                    { accessorKey: 'teachers', header: 'Преподаватели', enableSorting: true,  },
-                    { accessorKey: 'groups', header: 'Группы', enableSorting: true,  },
+                    { accessorKey: 'teachers', header: 'Преподаватели', enableSorting: true, },
+                    { accessorKey: 'groups', header: 'Группы', enableSorting: true, },
                 ]}
             />
         </div>

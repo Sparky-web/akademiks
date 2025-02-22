@@ -41,7 +41,7 @@ interface ComboboxProps {
 export function Combobox({ data, value, onChange, modal = false, size = 'base', className }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
 
-  const ref = useRef()
+  const ref = useRef(undefined)
 
   const itemsToFind = data.flatMap(e => 'values' in e ? e.values : [e])
   // console.log(itemsToFind)

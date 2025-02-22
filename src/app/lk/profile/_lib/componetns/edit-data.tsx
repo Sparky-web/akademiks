@@ -59,7 +59,7 @@ export default function EditData() {
             <Card>
                 <CardTitle>Личные данные</CardTitle>
                 <div className="grid gap-3">
-                    <form.Field name="name" 
+                    <form.Field name="name"
 
                         validators={{
                             onChange: z.string().min(1)
@@ -96,7 +96,7 @@ export default function EditData() {
                                         form.setFieldValue('teacherId', null)
                                     }}
                                 />
-                                {!!field.state.meta.errors.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.join(', ')}</p>}
+                                {!!field.state.meta.errors.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.map(e => e.message).join(', ')}</p>}
                             </div>
                         )}
                     </form.Field>
@@ -121,7 +121,7 @@ export default function EditData() {
                                                 field.handleChange(e)
                                             }}
                                         />
-                                        {!!field.state.meta.errors?.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.join(', ')}</p>}
+                                        {!!field.state.meta.errors?.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.map(e => e.message).join(', ')}</p>}
                                     </div>
                                 )}
                             </form.Field>
@@ -144,11 +144,11 @@ export default function EditData() {
                                             value={field.state.value}
                                             onChange={field.handleChange}
                                         />
-                                        {!!field.state.meta.errors?.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.join(', ')}</p>}
+                                        {!!field.state.meta.errors?.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.map(e => e.message).join(', ')}</p>}
                                     </div>
                                 )}
                             </form.Field>
-                            
+
                         </>}
                     </form.Subscribe>
 

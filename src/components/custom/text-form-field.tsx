@@ -11,7 +11,7 @@ const TextFormField = ({ field, label, inputProps }: { field: FieldApi<any, any>
             value={field.state.value}
             {...inputProps}
         />
-        {!!field.state.meta.errors.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.join(', ')}</p>}
+        {!!field.state.meta.errors.length && <p className="text-red-500 text-xs font-medium">{field.state.meta.errors.map(e => e.message).join(', ')}</p>}
     </div>
 }
 

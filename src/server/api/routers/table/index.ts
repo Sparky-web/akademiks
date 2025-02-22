@@ -13,7 +13,7 @@ export interface Column {
 
 const filtersSchema = z.array(z.object({
     columnKey: z.string(),
-    operator: z.enum(["=", "!=", ">", "<", ">=", "<=",  'NOT LIKE', 'IN', 'NOT IN', 'IS', 'IS NOT']),
+    operator: z.enum(["=", "!=", ">", "<", ">=", "<=", 'NOT LIKE', 'IN', 'NOT IN', 'IS', 'IS NOT']),
     value: z.string(),
 }));
 
@@ -42,7 +42,7 @@ export default createTRPCRouter({
         const rows = await db.$queryRawUnsafe(`
             select * from (${sql}) as t
             ${filtersSql ? `where ${filtersSql}` : ''}
-            ${orderBy ? `order by ${orderBy} ${orderDirection}` : ''}
+            ${orderBy ? `order by "${orderBy}" ${orderDirection}` : ''}
             ${limit ? `limit ${limit}` : ''}
             ${start ? `offset ${start}` : ''}
         `);

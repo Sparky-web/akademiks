@@ -20,7 +20,7 @@ export default async function LkLayout({ children }: { children: React.ReactNode
     const user = session?.user || null
 
     return (
-        <div className="max-lg:container max-lg:pt-6 max-lg:pb-[calc(16px+84px)] lg:grid lg:grid-cols-[250px,1fr] lg:h-screen min-h-screen grid">
+        <div className="max-lg:app-container max-lg:pt-6 max-lg:pb-[calc(16px+84px)] lg:grid lg:grid-cols-[250px_1fr] lg:h-screen min-h-screen grid">
             <SetUserProvider userData={user}>
                 <InstallProvider>
                     <Menu />

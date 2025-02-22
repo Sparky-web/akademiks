@@ -58,7 +58,7 @@ export function FormSelectField(props: FormFieldSelectInterface) {
             </Select >
             {
                 Boolean(props.field.state.meta.errors.length) && <span className="text-red-500 text-xs">
-                    {props.field.state.meta.errors.join(', ')}
+                    {props.field.state.meta.errors.map(e => e.message).join(', ')}
                 </span>
             }
         </LabelGroup >

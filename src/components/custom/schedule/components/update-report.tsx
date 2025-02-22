@@ -152,11 +152,11 @@ function ChangeDetailsSection({ result }: { result: NonNullable<ScheduleChangeRe
   const getTypeColor = (type: string) => {
     switch (type) {
       case "add":
-        return "bg-green-100"
+        return "bg-green-500/10"
       case "update":
-        return "bg-yellow-100"
+        return "bg-yellow-500/10"
       case "delete":
-        return "bg-red-100"
+        return "bg-red-500/10"
       default:
         return ""
     }

@@ -47,7 +47,7 @@ interface DbTableProps<T> {
     options?: DataTableProps<T>['options'];
 }
 
-export default function DbTable<T>({ sql, columns, options,includes,  ...props }: DbTableProps<T>) {
+export default function DbTable<T>({ sql, columns, options, includes, ...props }: DbTableProps<T>) {
     const [pagination, setPagination] = useState({
         pageIndex: 0,
         pageSize: 20,
@@ -97,11 +97,11 @@ export default function DbTable<T>({ sql, columns, options,includes,  ...props }
             enableSorting: true,
             cell: ({ cell }) => (
                 // <Tooltip title={cell.getValue()}>
-                    <span className="line-clamp-3">{cell.getValue()}</span>
+                <span className="line-clamp-3">{cell.getValue()}</span>
                 // </Tooltip>
             )
         }))
-    } 
+    }
 
     // console.log(isPending, isFetching, isLoading, error)
 
@@ -113,7 +113,7 @@ export default function DbTable<T>({ sql, columns, options,includes,  ...props }
             </div>} */}
 
             {(isFetching || !columns) &&
-                <div className="w-full h-full flex justify-center items-center absolute top-0 left-0 z-10 bg-white/60">
+                <div className="w-full h-full flex justify-center items-center absolute top-0 left-0 z-10 ">
                     <div className="relative inline-flex">
                         <div className="w-10 h-10 bg-primary/60 rounded-full"></div>
                         <div className="w-10 h-10 bg-primary/60 rounded-full absolute top-0 left-0 animate-ping"></div>
@@ -134,7 +134,7 @@ export default function DbTable<T>({ sql, columns, options,includes,  ...props }
                             <div className="grid gap-2">
                                 {field.state.value.map((_, i) => {
                                     return (
-                                        <div key={i} className="grid grid-cols-[1fr,1fr,1fr,auto] gap-3">
+                                        <div key={i} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-3">
                                             <form.Field name={`filters[${i}].columnKey`} validators={{
                                                 onChange: z.string().min(1, 'Обязательное поле')
                                             }}>

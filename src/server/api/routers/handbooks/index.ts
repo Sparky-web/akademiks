@@ -15,8 +15,8 @@ export default createTRPCRouter({
 
             if (input.teacherId) {
                 targetLessons = await ctx.db.$queryRaw`SELECT title, count(*) as c
-                FROM Lesson
-                WHERE TeacherId = ${input.teacherId} 
+                FROM "Lesson"
+                WHERE "teacherId" = ${input.teacherId} 
                 GROUP BY title
                 ORDER BY 
                     c DESC;`
@@ -33,8 +33,8 @@ export default createTRPCRouter({
 
             else if (input.groupId) {
                 targetLessons = await ctx.db.$queryRaw`SELECT title, count(*) as c
-                FROM Lesson
-                WHERE GroupId = ${input.groupId} 
+                FROM "Lesson"
+                WHERE "groupId" = ${input.groupId} 
                 GROUP BY title
                 ORDER BY 
                     c DESC;`
@@ -50,7 +50,7 @@ export default createTRPCRouter({
             }
 
             let allLessons = await ctx.db.$queryRaw`SELECT title, count(*) as c
-                FROM Lesson
+                FROM "Lesson"
                 GROUP BY title
                 ORDER BY 
                     c DESC;`

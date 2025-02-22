@@ -17,15 +17,15 @@ export default function Page() {
                 table="Teacher"
                 sql={`select g.id, g.name, 
              count(l.id) as lessonsCount from "Teacher" g
-      left join Lesson l on l.teacherId = g.id
+      left join "Lesson" l on l."teacherId" = g.id
       group by g.id`}
                 filters={{
                     enabled: true
                 }}
                 columns={[
                     { accessorKey: 'name', header: 'Преподаватель', enableSorting: true, },
-                    { accessorKey: 'id', header: 'ID', enableSorting: true,  },
-                    { accessorKey: 'lessonsCount', header: 'Всего пар', enableSorting: true,  },
+                    { accessorKey: 'id', header: 'ID', enableSorting: true, },
+                    { accessorKey: 'lessonsCount', header: 'Всего пар', enableSorting: true, },
                 ]}
             />
         </div>

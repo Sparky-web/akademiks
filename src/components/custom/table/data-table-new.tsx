@@ -90,11 +90,11 @@ function _DataTable({ useTableContext }: TablePassedProps) {
     })
 
     return (
-        <div className={cn("grid gap-4", options.size === 'sm' && 'text-xs')}>
+        <div className={cn("grid gap-4 ", options.size === 'sm' && 'text-xs')}>
             {(options.header?.rowCount || options.header?.search || options.header?.columnManagement) && <DataTableToolbar useTableContext={useTableContext} setShowOnlySelected={setShowOnlySelected} showOnlySelected={showOnlySelected} />}
-            <div className={cn("bg-white rounded-xl relative ", "!h-[75dvh] overflow-auto")} ref={tableContainerRef}>
+            <div className={cn("rounded-xl relative", "!h-[75dvh] overflow-auto bg-card")} ref={tableContainerRef}>
                 <Table className={options.virtualization.enabled ? 'table-fixed' : ''}>
-                    <TableHeader className="sticky top-[-1px] z-10 bg-white shadow-md"
+                    <TableHeader className="sticky top-[-1px] z-10 shadow-md bg-muted"
                         style={options.virtualization.enabled ? {
                             display: 'inline-flex',
                             width: 'fit-content',
@@ -357,11 +357,11 @@ function __DataTable(props: DataTableProps<any>) {
         // initialState: {
         //   columnFilters: options.filters.enabled ? options.filters.defaultFilters || [] : []
         // },
-        
+
         rowCount: options.footer.serverPagination?.enabled ? options.footer.serverPagination.rowCount : data.length,
         state: {
             sorting,
-            columnVisibility: (options.optionsSaver?.enabled ? settings?.visibility : null)  || columnVisibility,
+            columnVisibility: (options.optionsSaver?.enabled ? settings?.visibility : null) || columnVisibility,
             rowSelection,
             columnFilters,
             columnSizing: (options.optionsSaver?.enabled ? settings?.sizing : null) || columnSizing,
@@ -382,7 +382,7 @@ function __DataTable(props: DataTableProps<any>) {
         onColumnFiltersChange: setColumnFilters,
         onColumnVisibilityChange: setColumnVisibility,
         onPaginationChange: options.footer.serverPagination?.enabled ? options.footer.serverPagination.onPaginationChange : setPagination,
-        onColumnSizingChange:  setColumnSizing,
+        onColumnSizingChange: setColumnSizing,
         manualPagination: options.footer.serverPagination?.enabled,
 
         enableRowSelection: options.selectable.enabled ? row => typeof row.original.isSelectable === 'undefined' ? true : row.original.isSelectable : false,
