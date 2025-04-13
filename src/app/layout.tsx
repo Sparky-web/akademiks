@@ -1,6 +1,6 @@
 import "~/styles/globals.css";
 
-import { Montserrat } from 'next/font/google';
+import { Montserrat } from "next/font/google";
 
 import { type Metadata } from "next";
 
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-const montserrat = Montserrat({ subsets: ['latin'] });
+const montserrat = Montserrat({ subsets: ["latin"] });
 
 export default async function RootLayout({
   children,
@@ -29,21 +29,30 @@ export default async function RootLayout({
   return (
     <html lang="ru" className={`${montserrat.className} `}>
       <head>
-        <title>
-          Академикс — расписание УРТК
-        </title>
-        <meta name="description" content="Платформа Свердловской области для просмотра расписания СПО. Расписания уральского радиотехнического колледжа им. А.С. Попова." />
-        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" data-meta-dynamic="true"></meta>
+        <title>Академикс — расписание УРТК</title>
+        <meta
+          name="description"
+          content="Платформа Свердловской области для просмотра расписания СПО. Расписания уральского радиотехнического колледжа им. А.С. Попова."
+        />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+          data-meta-dynamic="true"
+        ></meta>
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-        <meta name="theme-color" content="#fafafa" />
+        <meta name="theme-color" content="#fafafa" id="theme-color" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet"></link>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"
+          rel="stylesheet"
+        ></link>
       </head>
       <body className="bg-background text-foreground" suppressHydrationWarning>
-        <div dangerouslySetInnerHTML={{
-          __html: `<!-- Google tag (gtag.js) -->
+        <div
+          dangerouslySetInnerHTML={{
+            __html: `<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-W5V8WN3GB7"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -51,18 +60,18 @@ export default async function RootLayout({
   gtag('js', new Date());
 
   gtag('config', 'G-W5V8WN3GB7');
-</script>`
-        }} />
+</script>`,
+          }}
+        />
 
         <TRPCReactProvider>
-          <ReduxProvider>
-            {children}
-          </ReduxProvider>
+          <ReduxProvider>{children}</ReduxProvider>
         </TRPCReactProvider>
         <Toaster position="top-right" />
 
-        <script dangerouslySetInnerHTML={{
-          __html: `if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
   document.body.classList.add('dark');
 }
 
@@ -89,9 +98,9 @@ updateThemeColor();
 // Отслеживание изменений системной темы
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateThemeColor);
 
-`
-        }}>
-        </script>
+`,
+          }}
+        ></script>
 
         {/* <script dangerouslySetInnerHTML={{
           __html: `
@@ -125,7 +134,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
 `
         }}></script> */}
       </body>
-
     </html>
   );
 }

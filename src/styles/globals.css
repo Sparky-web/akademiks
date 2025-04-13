@@ -373,3 +373,9 @@ body {
 button {
   cursor: pointer;
 }
+
+.purpose-table td,
+.purpose-table th {
+  padding: 1rem;
+  border: 1px solid var(--border);
+}
