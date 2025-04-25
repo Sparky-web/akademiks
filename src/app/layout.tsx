@@ -7,13 +7,13 @@ import { type Metadata } from "next";
 import { Toaster } from "~/components/ui/sonner";
 
 import { TRPCReactProvider } from "~/trpc/react";
-import { getServerAuthSession } from "~/server/auth";
 import { ReduxProvider } from "./_lib/context/redux";
 
 // import parseBackground from "~/lib/utils/parse-background";
 // parseBackground()
 
 import { api } from "~/trpc/server";
+import { SessionProvider } from "next-auth/react";
 // import { Provider } from "react-redux";
 // import store from "~/client-store";
 
@@ -41,7 +41,7 @@ export default async function RootLayout({
         ></meta>
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-        <meta name="theme-color" content="#fafafa" id="theme-color" />
+        <meta name="theme-color" content="#f8f8f8" id="theme-color" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
@@ -89,7 +89,7 @@ function updateThemeColor() {
   const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
   // Устанавливаем цвет на основе текущей темы
-  themeColorMetaTag.setAttribute('content', isDarkMode ? '#121212' : '#ffffff');
+  themeColorMetaTag.setAttribute('content', isDarkMode ? '#0a0a0a' : '#f8f8f8');
 }
 
 // Инициализация и обновление при смене темы
