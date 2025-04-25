@@ -46,11 +46,6 @@ export default function DayPicker(props: DayPickerProps) {
             >
               <span className="text-xs">{day}</span>
               <span className="mb-2 text-base font-semibold">
-                {/* {
-                  DateTime.fromJSDate(date).toLocaleParts({
-                    day: "numeric",
-                  }).values(
-                } */}
                 {DateTime.fromJSDate(date).minus({ days: 1 }).toFormat("dd")}
               </span>
               <DayLoadProgress day={foundDay} />
