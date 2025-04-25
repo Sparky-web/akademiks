@@ -28,31 +28,12 @@ model Lesson {
   groupId String?
   Group   Group?  @relation(fields: [groupId], references: [id])
 
-  // Days   Day[]
   startDay DateTime @default(now())
 
   Classroom   Classroom? @relation(fields: [classroomId], references: [id])
   classroomId Int?
 
   shouldDisplayForStudents Boolean @default(true)
-}
-
-model Day {
-  id    Int      @id @default(autoincrement())
-  start DateTime
-
-  Group   Group?  @relation(fields: [groupId], references: [id])
-  groupId String?
-
-  teacherId String?
-  Teacher   Teacher? @relation(fields: [teacherId], references: [id])
-
-  // lessons Lesson[]
-  User   User?   @relation(fields: [userId], references: [id])
-  userId String?
-
-  @@unique([start, groupId])
-  @@unique([start, teacherId])
 }
 
 model Classroom {
@@ -66,7 +47,6 @@ model Teacher {
   id   String @id
   name String
 
-  Days   Day[]
   Lesson Lesson[]
 
   Users User[]
@@ -107,7 +87,8 @@ model User {
   Teacher   Teacher? @relation(fields: [teacherId], references: [id])
   teacherId String?
 
-  Day              Day[]
+  resetPasswordToken String? @unique
+
   Favourites       Favourite[]
   ErrorReport      ErrorReport[]
   PushSubscription PushSubscription[]
@@ -125,7 +106,6 @@ model Group {
   title String
   users User[]
 
-  Days      Day[]
   Lessons   Lesson[]
   Favourite Favourite[]
 

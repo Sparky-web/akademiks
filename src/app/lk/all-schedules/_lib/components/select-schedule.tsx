@@ -14,14 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { api } from "~/trpc/react";
 
 function SelectSchedule() {
   const { groups, teachers } = useAppSelector((state) => state.schedule);
-
-  const { data } = api.schedule.allSchedules.useQuery();
-
-  console.log(data);
 
   if (!groups || !teachers)
     throw new Error("Не найдены группы и преподаватели");

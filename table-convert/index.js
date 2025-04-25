@@ -1,63 +1,138 @@
 const ExcelJS = require('exceljs');
-const dayjs = require('dayjs');
-require('dayjs/locale/ru');
-dayjs.locale('ru');
+const path = require('path');
 
-const fs = require('fs');
+// Пути к файлам
+const excelPath = path.join(__dirname, 'Ои.xlsx');
+const jsonData = require('./data.json');
 
-const WEEKDAYS = ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'];
+// Настройки таблицы
+const templateStartRow = 3;
+const groupTitleRow = 5;
+const startRow = 7;
+const rowsPerDay = 14;
+const lessonsPerDay = 7;
+const baseGroupStartCol = 4; // D = 4
+const groupColWidth = 4;
 
-async function generateScheduleFromTemplate(inputPath, outputPath, schedulesArray) {
+// вспомогательные функции
+function colToNumber(col) {
+  let num = 0;
+  for (let i = 0; i < col.length; i++) {
+    num = num * 26 + (col.charCodeAt(i) - 64);
+  }
+  return num;
+}
+
+function numberToCol(num) {
+  let col = '';
+  while (num > 0) {
+    const rem = (num - 1) % 26;
+    col = String.fromCharCode(65 + rem) + col;
+    num = Math.floor((num - 1) / 26);
+  }
+  return col;
+}
+
+async function main() {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.readFile(inputPath);
+  await workbook.xlsx.readFile(excelPath);
+  const sheet = workbook.worksheets[0];
 
-  const templateSheet = workbook.getWorksheet(1);
+  // Проверка: массив расписаний или один объект?
 
-  for (const schedule of schedulesArray) {
-    const groupTitle = schedule.group.title;
-    const sheet = workbook.addWorksheet(groupTitle);
+  const schedules = Array.isArray(jsonData) ? jsonData : [jsonData];
 
-    // копирование всего из шаблона
-    templateSheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
-      const newRow = sheet.getRow(rowNumber);
-      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-        const newCell = newRow.getCell(colNumber);
-        newCell.value = cell.value;
-        newCell.style = JSON.parse(JSON.stringify(cell.style)); // глубокое копирование стиля
-      });
-      newRow.height = row.height;
-    });
-    sheet.columns = templateSheet.columns.map(col => ({ ...col }));
 
-    // заполнение расписания
-    for (const dayBlock of schedule.data) {
-      const date = dayjs(dayBlock.start);
-      const weekday = date.format('dddd'); // день недели
-      const rowIndex = WEEKDAYS.indexOf(weekday); // 0 (вс) - 6 (сб)
-      if (rowIndex === -1 || rowIndex === 0) continue; // пропускаем воскресенье
+  const groupMap = schedules.map((s) => ({
+    id: s.group.id,
+    title: s.group.title,
+    data: s.data,
+  }));
 
-      const excelRow = sheet.getRow(rowIndex + 2); // сдвиг: первая строка — заголовок
+  const mergedCellsToCopy = [];
 
-      for (const lesson of dayBlock.lessons) {
-        const colIndex = lesson.index + 1;
-        const text = `${lesson.title}\n${lesson.Classroom.name} ауд.\n${lesson.Teacher.name}`;
-        const cell = excelRow.getCell(colIndex);
-        cell.value = text;
-        cell.alignment = { wrapText: true, vertical: 'middle', horizontal: 'center' };
+  for (const [range, rangeObj] of Object.entries(sheet._merges)) {
+    const { left, right, top, bottom } = rangeObj.model;
+
+    if (left >= baseGroupStartCol && right <= baseGroupStartCol + groupColWidth - 1
+      && (left !== right || top !== bottom)
+    ) {
+      mergedCellsToCopy.push(rangeObj.model);
+    }
+  }
+
+  // Копируем шаблонную область расписания для всех групп
+  for (let i = 1; i < groupMap.length; i++) {
+    const fromStartCol = baseGroupStartCol;
+    const toStartCol = baseGroupStartCol + i * groupColWidth;
+
+    for (let row = templateStartRow; row < sheet.rowCount + 1; row++) {
+      for (let offset = 0; offset < groupColWidth; offset++) {
+        const sourceCell = sheet.getRow(row).getCell(fromStartCol + offset);
+        const targetCell = sheet.getRow(row).getCell(toStartCol + offset);
+
+        targetCell.value = sourceCell.value;
+        targetCell.style = { ...sourceCell.style };
+        targetCell.font = sourceCell.font;
+        targetCell.alignment = sourceCell.alignment;
+        targetCell.border = sourceCell.border;
+        targetCell.fill = sourceCell.fill;
+      }
+    }
+
+    for (let offset = 0; offset < groupColWidth; offset++) {
+      const col = sheet?.getColumn(fromStartCol + offset);
+      const destCol = sheet?.getColumn(toStartCol + offset);
+      if (!col) continue;
+      if (!destCol) continue;
+
+      destCol.width = col.width;
+    }
+
+    sheet.getRow(groupTitleRow).getCell(toStartCol).value = groupMap[i].title;
+  }
+  // Заголовок группы (на строку выше — обычно 6)
+
+  for (const merged of mergedCellsToCopy) {
+    for (let i = 1; i < groupMap.length; i++) {
+
+      const colOffset = i * groupColWidth;
+
+      const newLeft = merged.left + colOffset;
+      const newRight = merged.right + colOffset;
+
+      const startCell = `${numberToCol(newLeft)}${merged.top}`;
+      const endCell = `${numberToCol(newRight)}${merged.bottom}`;
+      const newRange = `${startCell}:${endCell}`;
+
+      sheet.mergeCells(newRange);
+    }
+  }
+
+  // Заполняем расписание
+  for (let groupIndex = 0; groupIndex < groupMap.length; groupIndex++) {
+    const group = groupMap[groupIndex];
+    const groupOffset = baseGroupStartCol + groupIndex * groupColWidth;
+
+    for (let dayIndex = 0; dayIndex < group.data.length; dayIndex++) {
+      const day = group.data[dayIndex];
+
+      for (const lesson of day.lessons) {
+        const lessonRowStart = startRow + dayIndex * rowsPerDay + (lesson.index - 1) * 2;
+        const subjectCell = sheet.getRow(lessonRowStart).getCell(groupOffset);
+        const teacherCell = sheet.getRow(lessonRowStart + 1).getCell(groupOffset);
+        const classroomCell = sheet.getRow(lessonRowStart + 1).getCell(groupOffset + 2);
+
+        subjectCell.value = lesson.title;
+        teacherCell.value = lesson.Teacher.name;
+        classroomCell.value = lesson.Classroom.name;
       }
     }
   }
 
-  // удалить шаблон
-  workbook.removeWorksheet(templateSheet.id);
-
-  // сохранить
-  await workbook.xlsx.writeFile(outputPath);
+  const output = path.join(__dirname, 'Ои_заполнено.xlsx');
+  await workbook.xlsx.writeFile(output);
+  console.log(`Готово! Сохранено в ${output}`);
 }
 
-// пример запуска
-const schedules = require('./schedule.json'); // сюда положи массив расписаний
-
-generateScheduleFromTemplate('./Ои.xlsx', './output.xlsx', schedules)
-  .then(() => console.log('✅ Готово: output.xlsx'))
-  .catch(console.error);
+main().catch(console.error);
