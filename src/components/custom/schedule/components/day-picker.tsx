@@ -32,6 +32,7 @@ export default function DayPicker(props: DayPickerProps) {
           const date = DateTime.fromJSDate(weekStart)
             .plus({ days: index })
             .toJSDate();
+
           const isSelected =
             date.toISOString() === selectedDayStart.toISOString();
           const foundDay = props.days.find(
@@ -46,7 +47,7 @@ export default function DayPicker(props: DayPickerProps) {
             >
               <span className="text-xs">{day}</span>
               <span className="mb-2 text-base font-semibold">
-                {DateTime.fromJSDate(date).minus({ days: 1 }).toFormat("dd")}
+                {DateTime.fromJSDate(date).toFormat("dd")}
               </span>
               <DayLoadProgress day={foundDay} />
             </button>
