@@ -20,6 +20,7 @@ import { P } from "~/components/ui/typography";
 import notifyFromReports from "./_lib/utils/notify-from-reports";
 import generateReport from "./_lib/utils/generate-report";
 import { allSchedulesProcedure } from "./_lib/utils/all-schedules-procedure";
+import teachers from "../teachers";
 
 export default createTRPCRouter({
   generate: protectedProcedure
@@ -409,4 +410,34 @@ export default createTRPCRouter({
       };
     }),
   allSchedules: allSchedulesProcedure,
+  getTitle: publicProcedure
+    .input(
+      z.object({
+        type: z.enum(["student", "teacher"]),
+        id: z.string(),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      if (input.type === "student") {
+        const group = await ctx.db.group.findFirst({
+          where: {
+            id: input.id,
+          },
+        });
+        if (!group) throw new Error("Не найдено");
+
+        return group.title;
+      } else if (input.type === "teacher") {
+        const teacher = await ctx.db.teacher.findFirst({
+          where: {
+            id: input.id,
+          },
+        });
+        if (!teacher) throw new Error("Не найдено");
+
+        return teacher.name;
+      }
+
+      throw new Error("Не указан тип расписания");
+    }),
 });

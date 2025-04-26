@@ -46,7 +46,7 @@ export const authRouter = createTRPCRouter({
         name: user.name,
       };
     }),
-  resetPassword: protectedProcedure
+  resetPassword: publicProcedure
     .input(
       z.object({
         token: z.string(),

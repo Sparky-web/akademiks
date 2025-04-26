@@ -18,6 +18,9 @@ import { SessionProvider } from "next-auth/react";
 // import store from "~/client-store";
 
 export const metadata: Metadata = {
+  title: "Академикс — расписание УРТК",
+  description:
+    "Платформа Свердловской области для просмотра расписания СПО. Расписания уральского радиотехнического колледжа им. А.С. Попова.",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
@@ -29,11 +32,11 @@ export default async function RootLayout({
   return (
     <html lang="ru" className={`${montserrat.className} `}>
       <head>
-        <title>Академикс — расписание УРТК</title>
+        {/* <title>Академикс — расписание УРТК</title>
         <meta
           name="description"
           content="Платформа Свердловской области для просмотра расписания СПО. Расписания уральского радиотехнического колледжа им. А.С. Попова."
-        />
+        /> */}
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"

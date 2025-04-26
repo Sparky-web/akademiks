@@ -160,9 +160,6 @@ export default function DbTable<T>({
               onSortingChange: setSortingState,
               state: sortingState,
             },
-            virtualization: {
-              enabled: true,
-            },
             footer: {
               //   serverPagination: {
               //     enabled: true,

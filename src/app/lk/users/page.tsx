@@ -64,6 +64,9 @@ export default function Page() {
               enabled: false,
             },
           },
+          virtualization: {
+            enabled: true,
+          },
         }}
         columns={[
           { accessorKey: "name", header: "Имя", enableSorting: true },
