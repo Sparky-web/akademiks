@@ -45,6 +45,7 @@ export default async function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="theme-color" content="#f8f8f8" id="theme-color" />
+        <meta name="yandex-verification" content="3fbe08f058d76b02" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
