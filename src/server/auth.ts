@@ -24,7 +24,6 @@ declare module "next-auth" {
     user?: User;
   }
 
-
   // interface User {
   //   // ...other properties
   //   // role: UserRole;
@@ -39,10 +38,10 @@ declare module "next-auth" {
 export const authOptions: NextAuthOptions = {
   callbacks: {
     session: ({ session, token }) => {
-      return ({
+      return {
         ...session,
-        user: token.user as User | undefined
-      })
+        user: token.user as User | undefined,
+      };
     },
     async jwt({ token }) {
       if (token.sub) {
@@ -55,17 +54,17 @@ export const authOptions: NextAuthOptions = {
             Favourites: {
               include: {
                 Group: true,
-                Teacher: true
-              }
-            }
-          }
-        })
+                Teacher: true,
+              },
+            },
+          },
+        });
 
         if (data) {
           // @ts-ignore
-          delete data.password
+          delete data.password;
 
-          token = { ...token, user: data }
+          token = { ...token, user: data };
         }
       }
 
@@ -75,7 +74,7 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db) as Adapter,
   providers: [
     CredentialsProvider({
-      name: 'Credentials',
+      name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text", placeholder: "you@example.com" },
         password: { label: "Password", type: "password" },
@@ -106,11 +105,10 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   jwt: {
-    maxAge: 60 * 60 * 24 * 512
+    maxAge: 60 * 60 * 24 * 512,
   },
   session: {
-    strategy: 'jwt',
-    // jwt: true,
+    strategy: "jwt",
   },
 };
 

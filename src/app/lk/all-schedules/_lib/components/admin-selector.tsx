@@ -46,7 +46,7 @@ export default function ScheduleAdminSelector() {
                 group.title.toLowerCase().includes(searchGroup.toLowerCase()),
               )
               .map((group) => (
-                <Link
+                <a
                   target="_blank"
                   href={
                     "/lk/all-schedules/student/" +
@@ -64,7 +64,7 @@ export default function ScheduleAdminSelector() {
                   >
                     {group.title}
                   </Button>
-                </Link>
+                </a>
               ))}
           </div>
         </Card>
@@ -85,7 +85,7 @@ export default function ScheduleAdminSelector() {
                   .includes(searchTeacher.toLowerCase()),
               )
               .map((teacher) => (
-                <Link
+                <a
                   key={teacher.id}
                   target="_blank"
                   href={
@@ -103,7 +103,7 @@ export default function ScheduleAdminSelector() {
                   >
                     <span className="w-full truncate">{teacher.name}</span>
                   </Button>
-                </Link>
+                </a>
               ))}
           </div>
         </Card>
