@@ -16,9 +16,10 @@ import ErrorReportModal from "../errors/report-error";
 import Card from "../card";
 
 export interface ScheduleProps {
-  type: "student" | "teacher";
+  type: "student" | "teacher" | "classroom";
   groupId?: string;
   teacherId?: string;
+  classroomId?: number;
   endTitleElement?: React.ReactNode;
   weekStart?: string;
 }
@@ -44,6 +45,7 @@ function Schedule(props: ScheduleProps) {
     {
       groupId: props.type === "student" ? props.groupId : undefined,
       teacherId: props.type === "teacher" ? props.teacherId : undefined,
+      classroomId: props.type === "classroom" ? props.classroomId : undefined,
       weekStart,
     },
     {
@@ -78,7 +80,11 @@ function Schedule(props: ScheduleProps) {
       <div className="flex content-center items-center gap-3">
         <PageTitle className="flex w-full items-center justify-between gap-4">
           Расписание:{" "}
-          {data.type === "student" ? data.group?.title : data.teacher?.name}
+          {data.type === "student"
+            ? data.group?.title
+            : data.type === "classroom"
+              ? "аудитория " + data.classroom?.name
+              : data.teacher?.name}
           {props.endTitleElement}
         </PageTitle>
         <div className="ml-auto w-fit max-lg:hidden">
@@ -128,11 +134,7 @@ function Schedule(props: ScheduleProps) {
         <DesktopSchedule schedule={data} weekStart={weekStart} />
       </div>
 
-      <Card className="max-w-[400px] bg-amber-500/10">
-        {/* <CardTitle className="">
-                    <AlertCircle className="w-5 h-5 mr-2 inline-block" />
-                    Приложение работает в тестовом режиме
-                </CardTitle> */}
+      <Card className="bg-primary/10 mt-6 rounded-md border-none max-lg:w-full lg:max-w-[400px]">
         <div className="text-sm">
           Если вы обнаружили ошибку в расписании, или другую неисправность,
           пожалуйста нажмите на кнопку ниже.

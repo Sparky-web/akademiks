@@ -8,6 +8,7 @@ import {
   File,
   AlertCircleIcon,
   BookOpen,
+  House,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -87,6 +88,12 @@ export default function Menu() {
       title: "Преподаватели",
       path: "/lk/teachers",
       icon: User,
+    });
+
+    desktopMenu.push({
+      title: "Аудитории",
+      path: "/lk/classrooms",
+      icon: House,
     });
 
     desktopMenu.push({

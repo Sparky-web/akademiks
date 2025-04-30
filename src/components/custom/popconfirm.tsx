@@ -34,7 +34,7 @@ export default function PopConfirm(
     <div className="relative">
       <div onClick={() => setIsOpen(true)}>{children}</div>
       {isOpen && (
-        <Card className="absolute z-50 w-72 p-4 shadow-lg">
+        <Card className="absolute right-0 z-50 w-72 p-4 shadow-lg">
           <div className="flex items-center space-x-2">
             <AlertTriangle className="h-5 w-5 text-yellow-500" />
             <h4 className="font-semibold">{title}</h4>

@@ -1,32 +1,38 @@
-"use client"
-import { Group } from "@prisma/client";
+"use client";
+import { Classroom, Group } from "@prisma/client";
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "~/app/_lib/client-store";
-import { setGroups, setTeachers } from "~/app/_lib/client-store/_lib/slices/schedule";
+import {
+  setClassrooms,
+  setGroups,
+  setTeachers,
+} from "~/app/_lib/client-store/_lib/slices/schedule";
 import { Teacher } from "~/types/schedule";
 
 interface SetScheduleProps {
-    groups: Group[],
-    teachers: Teacher[],
-    children: React.ReactNode
+  groups: Group[];
+  teachers: Teacher[];
+  classrooms: Classroom[];
+  children: React.ReactNode;
 }
 
 export default function SetSchedule(props: SetScheduleProps) {
-    const { groups, teachers } = props
+  const { groups, teachers, classrooms } = props;
 
-    const dispatch = useAppDispatch()
-    const { groups: groupsState, teachers: teachersState } = useAppSelector(state => state.schedule)
+  const dispatch = useAppDispatch();
+  const {
+    groups: groupsState,
+    teachers: teachersState,
+    classrooms: classroomsState,
+  } = useAppSelector((state) => state.schedule);
 
-    useEffect(() => {
-        if (groups && teachers) {
-            dispatch(setGroups(groups))
-            dispatch(setTeachers(teachers))
-        }
-    }, [groups, teachers])
+  useEffect(() => {
+    if (groups && teachers) {
+      dispatch(setGroups(groups));
+      dispatch(setTeachers(teachers));
+      dispatch(setClassrooms(classrooms));
+    }
+  }, [groups, teachers]);
 
-    return (
-        <>
-            {groupsState && teachersState && props.children}
-        </>
-    )
+  return <>{groupsState && teachersState && props.children}</>;
 }

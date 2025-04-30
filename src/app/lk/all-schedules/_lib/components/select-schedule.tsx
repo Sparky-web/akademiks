@@ -16,7 +16,9 @@ import {
 } from "~/components/ui/select";
 
 function SelectSchedule() {
-  const { groups, teachers } = useAppSelector((state) => state.schedule);
+  const { groups, teachers, classrooms } = useAppSelector(
+    (state) => state.schedule,
+  );
 
   if (!groups || !teachers)
     throw new Error("Не найдены группы и преподаватели");
@@ -24,6 +26,7 @@ function SelectSchedule() {
   const types = [
     { value: "student", label: "Студент" },
     { value: "teacher", label: "Преподаватель" },
+    { value: "classroom", label: "По аудитории" },
   ];
 
   const [scheduleType, setScheduleType] = React.useState<string | null>(
@@ -31,10 +34,12 @@ function SelectSchedule() {
   );
   const [groupId, setGroupId] = React.useState<string | null>(null);
   const [teacherId, setTeacherId] = React.useState<string | null>(null);
+  const [classroomId, setClassroomId] = React.useState<number | null>(null);
 
   useEffect(() => {
     setGroupId(null);
     setTeacherId(null);
+    setClassroomId(null);
   }, [scheduleType]);
 
   return (
@@ -51,11 +56,22 @@ function SelectSchedule() {
               <SelectValue placeholder="Выберите тип расписания" />
             </SelectTrigger>
             <SelectContent>
-              {types.map((e) => (
+              {/* {types.map((e) => (
                 <SelectItem key={e.value} value={e.value}>
                   {e.label}
                 </SelectItem>
-              ))}
+              ))} */}
+              <SelectItem value="student" className="font-medium">
+                Студент
+              </SelectItem>
+              <SelectItem value="teacher" className="font-medium">
+                Преподаватель
+              </SelectItem>
+              {!!classrooms?.length && (
+                <SelectItem value="classroom" className="font-medium">
+                  По аудитории
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -89,9 +105,25 @@ function SelectSchedule() {
           </div>
         )}
 
-        {(groupId || teacherId) && (
+        {scheduleType === "classroom" && (
+          <div className="grid gap-1.5">
+            <Label>Аудитория</Label>
+            <Combobox
+              data={
+                classrooms?.map((classroom) => ({
+                  value: classroom.id.toString(),
+                  label: classroom.name,
+                })) || []
+              }
+              value={classroomId?.toString() || ""}
+              onChange={(value) => setClassroomId(value ? +value : null)}
+            />
+          </div>
+        )}
+
+        {(groupId || teacherId || classroomId) && (
           <Link
-            href={`/lk/all-schedules/${scheduleType}/${groupId || teacherId}`}
+            href={`/lk/all-schedules/${scheduleType}/${groupId || teacherId || classroomId}`}
           >
             <Button className="w-full">Открыть расписание</Button>
           </Link>

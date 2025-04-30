@@ -21,6 +21,7 @@ import notifyFromReports from "./_lib/utils/notify-from-reports";
 import generateReport from "./_lib/utils/generate-report";
 import { allSchedulesProcedure } from "./_lib/utils/all-schedules-procedure";
 import teachers from "../teachers";
+import getClassroomSchedule from "./_lib/utils/get-classroom-schedule";
 
 export default createTRPCRouter({
   generate: protectedProcedure
@@ -49,6 +50,7 @@ export default createTRPCRouter({
       z.object({
         groupId: z.string().optional(),
         teacherId: z.string().optional(),
+        classroomId: z.number().optional(),
         weekStart: z.date(),
       }),
     )
@@ -59,12 +61,19 @@ export default createTRPCRouter({
         return await getStudentSchedule(
           input.groupId,
           input.weekStart,
-          isAdmin,
+          isAdmin || false,
         );
       } else if (input.teacherId) {
         return await getTeacherSchedule(input.teacherId, input.weekStart);
+      } else if (input.classroomId) {
+        return await getClassroomSchedule(
+          input.classroomId,
+          input.weekStart,
+          isAdmin || false,
+        );
       }
-      throw new TRPCClientError("Не указан ни groupId, ни teacherId");
+
+      throw new TRPCClientError("Нет параметров для отображения расписания");
     }),
 
   update: protectedProcedure
@@ -413,17 +422,20 @@ export default createTRPCRouter({
   getTitle: publicProcedure
     .input(
       z.object({
-        type: z.enum(["student", "teacher"]),
+        type: z.enum(["student", "teacher", "classroom"]),
         id: z.string(),
       }),
     )
     .query(async ({ input, ctx }) => {
+      console.log(input);
+
       if (input.type === "student") {
         const group = await ctx.db.group.findFirst({
           where: {
             id: input.id,
           },
         });
+
         if (!group) throw new Error("Не найдено");
 
         return group.title;
@@ -436,6 +448,16 @@ export default createTRPCRouter({
         if (!teacher) throw new Error("Не найдено");
 
         return teacher.name;
+      } else if (input.type === "classroom") {
+        const classroom = await ctx.db.classroom.findFirst({
+          where: {
+            id: +input.id,
+          },
+        });
+
+        if (!classroom) throw new Error("Не найдено");
+
+        return "Аудитория " + classroom.name;
       }
 
       throw new Error("Не указан тип расписания");

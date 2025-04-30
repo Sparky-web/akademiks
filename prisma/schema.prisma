@@ -37,10 +37,12 @@ model Lesson {
 }
 
 model Classroom {
-  id   Int    @id @default(autoincrement())
-  name String @unique
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+  isHidden Boolean @default(false)
 
-  Lessons Lesson[]
+  Lessons   Lesson[]
+  Favourite Favourite[]
 }
 
 model Teacher {
@@ -57,14 +59,16 @@ model Teacher {
 model Favourite {
   id String @id @default(cuid())
 
-  userId    String
-  type      String
-  groupId   String?
-  teacherId String?
+  userId      String
+  type        String
+  groupId     String?
+  teacherId   String?
+  classroomId Int?
 
-  User    User     @relation(fields: [userId], references: [id])
-  Group   Group?   @relation(fields: [groupId], references: [id])
-  Teacher Teacher? @relation(fields: [teacherId], references: [id])
+  User      User       @relation(fields: [userId], references: [id])
+  Group     Group?     @relation(fields: [groupId], references: [id])
+  Teacher   Teacher?   @relation(fields: [teacherId], references: [id])
+  Classroom Classroom? @relation(fields: [classroomId], references: [id])
 
   @@unique([userId, groupId])
   @@unique([userId, teacherId])

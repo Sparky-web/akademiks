@@ -22,7 +22,7 @@ export async function generateMetadata(
   const { id, type } = await params;
 
   const title = await api.schedule.getTitle({
-    type: type as "student" | "teacher",
+    type: type as "student" | "teacher" | "classroom",
     id,
   });
 
@@ -45,6 +45,14 @@ export default async function SchedulePage(props: SchedulePageProps) {
   } else if (params.type === "student") {
     void (await api.schedule.get.prefetch({
       groupId: params.id,
+      weekStart:
+        typeof weekStart === "string"
+          ? new Date(weekStart)
+          : DateTime.now().startOf("week").toJSDate(),
+    }));
+  } else if (params.type === "classroom") {
+    void (await api.schedule.get.prefetch({
+      classroomId: +params.id,
       weekStart:
         typeof weekStart === "string"
           ? new Date(weekStart)
@@ -73,6 +81,7 @@ export default async function SchedulePage(props: SchedulePageProps) {
         groupId={params.id}
         type={params.type}
         teacherId={params.id}
+        classroomId={+params.id}
         weekStart={weekStart}
       />
     </div>

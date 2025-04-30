@@ -5,14 +5,15 @@ import ScheduleContent from "./_lib/components/content";
 export const revalidate = 1200;
 
 export default async function AllSchedules() {
-  const [groups, teachers] = await Promise.all([
+  const [groups, teachers, classrooms] = await Promise.all([
     api.groups.get(),
     api.teachers.get(),
+    api.classrooms.get(),
   ]);
 
   return (
     <div className="grid gap-6">
-      <SetSchedule teachers={teachers} groups={groups}>
+      <SetSchedule teachers={teachers} groups={groups} classrooms={classrooms}>
         <ScheduleContent />
       </SetSchedule>
     </div>

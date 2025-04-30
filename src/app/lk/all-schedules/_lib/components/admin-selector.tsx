@@ -15,12 +15,14 @@ export default function ScheduleAdminSelector() {
 
   const groups = useAppSelector((e) => e.schedule.groups);
   const teachers = useAppSelector((e) => e.schedule.teachers);
+  const classrooms = useAppSelector((e) => e.schedule.classrooms);
 
   const [searchGroup, setSearchGroup] = useState("");
   const [searchTeacher, setSearchTeacher] = useState("");
+  const [searchClassroom, setSearchClassroom] = useState("");
 
-  if (!groups || !teachers)
-    throw new Error("Не найдены группы и преподаватели");
+  if (!groups || !teachers || !classrooms)
+    throw new Error("Не найдены группы преподаватели или аудитории");
 
   return (
     <div className="grid gap-4">
@@ -102,6 +104,45 @@ export default function ScheduleAdminSelector() {
                     size="xs"
                   >
                     <span className="w-full truncate">{teacher.name}</span>
+                  </Button>
+                </a>
+              ))}
+          </div>
+        </Card>
+
+        <Card>
+          <CardTitle>По аудитории</CardTitle>
+          <Input
+            className="h-10"
+            value={searchClassroom}
+            onChange={(e) => setSearchClassroom(e.target.value)}
+            placeholder="Поиск"
+          />
+          <div className="auto-fill-9xl grid gap-2">
+            {classrooms
+              ?.filter((classroom) =>
+                classroom.name
+                  .toLowerCase()
+                  .includes(searchClassroom.toLowerCase()),
+              )
+              .map((classroom) => (
+                <a
+                  target="_blank"
+                  href={
+                    "/lk/all-schedules/classroom/" +
+                    classroom.id +
+                    "?weekStart=" +
+                    weekStart.toISOString()
+                  }
+                  key={classroom.id}
+                >
+                  <Button
+                    key={classroom.id}
+                    className="w-full"
+                    variant={"tenary"}
+                    size="xs"
+                  >
+                    <span className="w-full truncate">{classroom.name}</span>
                   </Button>
                 </a>
               ))}
