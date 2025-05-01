@@ -12,7 +12,7 @@ import { Teacher } from "~/types/schedule";
 interface SetScheduleProps {
   groups: Group[];
   teachers: Teacher[];
-  classrooms: Classroom[];
+  classrooms?: Classroom[];
   children: React.ReactNode;
 }
 
@@ -27,10 +27,10 @@ export default function SetSchedule(props: SetScheduleProps) {
   } = useAppSelector((state) => state.schedule);
 
   useEffect(() => {
-    if (groups && teachers && classrooms) {
+    if (groups && teachers) {
       dispatch(setGroups(groups));
       dispatch(setTeachers(teachers));
-      dispatch(setClassrooms(classrooms));
+      dispatch(setClassrooms(classrooms || []));
     }
   }, [groups, teachers, classrooms]);
 

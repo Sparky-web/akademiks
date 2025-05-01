@@ -116,21 +116,6 @@ export default function DbTable<T>({
     }
   }, [error]);
 
-  //   if (!columns && data && columnsSchema && data.rows?.[0]) {
-  //     columns = Object.keys(data.rows?.[0]).map((e) => ({
-  //       accessorKey: e,
-  //       header: columnsSchema.find((el) => e === el.title)?.description || e,
-  //       enableSorting: true,
-  //       cell: ({ cell }) => (
-  //         // <Tooltip title={cell.getValue()}>
-  //         <span className="line-clamp-3">{cell.getValue()}</span>
-  //         // </Tooltip>
-  //       ),
-  //     }));
-  //   }
-
-  // console.log(isPending, isFetching, isLoading, error)
-
   return (
     <div className="relative grid gap-4">
       {/* 

@@ -34,31 +34,39 @@ export async function generateMetadata(
 export default async function SchedulePage(props: SchedulePageProps) {
   const params = await props.params;
   const weekStart = (await props.searchParams).weekStart;
-  if (params.type === "teacher") {
-    void (await api.schedule.get.prefetch({
-      groupId: params.id,
-      weekStart:
-        typeof weekStart === "string"
-          ? new Date(weekStart)
-          : DateTime.now().startOf("week").toJSDate(),
-    }));
-  } else if (params.type === "student") {
-    void (await api.schedule.get.prefetch({
-      groupId: params.id,
-      weekStart:
-        typeof weekStart === "string"
-          ? new Date(weekStart)
-          : DateTime.now().startOf("week").toJSDate(),
-    }));
-  } else if (params.type === "classroom") {
-    void (await api.schedule.get.prefetch({
-      classroomId: +params.id,
-      weekStart:
-        typeof weekStart === "string"
-          ? new Date(weekStart)
-          : DateTime.now().startOf("week").toJSDate(),
-    }));
-  } else {
+  // if (params.type === "teacher") {
+  //   void (await api.schedule.get.prefetch({
+  //     groupId: params.id,
+  //     weekStart:
+  //       typeof weekStart === "string"
+  //         ? new Date(weekStart)
+  //         : DateTime.now().startOf("week").toJSDate(),
+  //   }));
+  // } else if (params.type === "student") {
+  //   void (await api.schedule.get.prefetch({
+  //     groupId: params.id,
+  //     weekStart:
+  //       typeof weekStart === "string"
+  //         ? new Date(weekStart)
+  //         : DateTime.now().startOf("week").toJSDate(),
+  //   }));
+  // } else if (params.type === "classroom") {
+  //   void (await api.schedule.get.prefetch({
+  //     classroomId: +params.id,
+  //     weekStart:
+  //       typeof weekStart === "string"
+  //         ? new Date(weekStart)
+  //         : DateTime.now().startOf("week").toJSDate(),
+  //   }));
+  // } else {
+  //   throw new Error("Неверный тип расписания");
+  // }
+
+  if (
+    params.type !== "student" &&
+    params.type !== "teacher" &&
+    params.type !== "classroom"
+  ) {
     throw new Error("Неверный тип расписания");
   }
 

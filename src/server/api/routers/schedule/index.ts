@@ -427,8 +427,6 @@ export default createTRPCRouter({
       }),
     )
     .query(async ({ input, ctx }) => {
-      console.log(input);
-
       if (input.type === "student") {
         const group = await ctx.db.group.findFirst({
           where: {

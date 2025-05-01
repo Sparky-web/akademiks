@@ -91,7 +91,6 @@ export default function NotificationButton() {
       });
       setSubscription(sub);
       const serializedSub = JSON.parse(JSON.stringify(sub));
-      console.log(serializedSub);
       await subscribe({
         keys: JSON.stringify(serializedSub.keys),
         endpoint: serializedSub.endpoint,
@@ -135,7 +134,7 @@ export default function NotificationButton() {
             size="icon"
             className={cn(
               `h-10 w-10 rounded-lg transition-all duration-300 ease-in-out`,
-              "bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg hover:from-purple-600 hover:to-pink-600 hover:text-white hover:shadow-xl",
+              "from-primary hover:from-primary-600 to-primary/50 hover:to-primary/70 bg-gradient-to-br text-white hover:text-white",
             )}
           >
             <Bell className={`h-5 w-5 ${subscription ? "" : ""}`} />
@@ -213,7 +212,7 @@ export default function NotificationButton() {
             size="icon"
             className={cn(
               `h-10 w-10 rounded-lg transition-all duration-300 ease-in-out`,
-              "bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg hover:from-purple-600 hover:to-pink-600 hover:text-white hover:shadow-xl",
+              "from-primary hover:from-primary-600 to-primary/50 hover:to-primary/70 bg-gradient-to-br text-white hover:text-white",
             )}
           >
             <Bell className={`h-5 w-5 ${subscription ? "" : ""}`} />
