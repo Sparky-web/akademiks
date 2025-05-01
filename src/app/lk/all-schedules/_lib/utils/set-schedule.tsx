@@ -27,12 +27,14 @@ export default function SetSchedule(props: SetScheduleProps) {
   } = useAppSelector((state) => state.schedule);
 
   useEffect(() => {
-    if (groups && teachers) {
+    if (groups && teachers && classrooms) {
       dispatch(setGroups(groups));
       dispatch(setTeachers(teachers));
       dispatch(setClassrooms(classrooms));
     }
-  }, [groups, teachers]);
+  }, [groups, teachers, classrooms]);
 
-  return <>{groupsState && teachersState && props.children}</>;
+  return (
+    <>{groupsState && teachersState && classroomsState && props.children}</>
+  );
 }

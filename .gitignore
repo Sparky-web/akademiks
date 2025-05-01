@@ -49,3 +49,6 @@ certificates
 table-convert/node_modules
 table-convert/package-lock.json
 table-convert/data.json
+
+files/*
+release.sh
