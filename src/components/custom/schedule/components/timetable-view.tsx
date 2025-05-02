@@ -167,14 +167,6 @@ export function ScheduleTimetableView({
         })}
       </div>
 
-      <div
-        dangerouslySetInnerHTML={{
-          __html: `<script>
-            ym(101414600, 'reachGoal', 'timetable-view');
-        </script>`,
-        }}
-      />
-
       {/* Lesson Details Drawer */}
       <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
         <DrawerContent>
