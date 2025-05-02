@@ -159,6 +159,14 @@ export function ScheduleTimetableView({
         })}
       </div>
 
+      <div
+        dangerouslySetInnerHTML={{
+          __html: `<script>
+            ym(101414600, 'reachGoal', 'timetable-view');
+        </script>`,
+        }}
+      />
+
       {/* Lesson Details Drawer */}
       <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
         <DrawerContent>
@@ -229,6 +237,7 @@ export function abbreviateTitle(title: string): string {
   if (title.length <= 15) return title;
 
   return title
+    .replace(/[^a-zA-Zа-яА-Я]/g, "")
     .split(" ")
     .map((word) =>
       word.length === 1 ? word.charAt(0) : word.charAt(0).toUpperCase(),
