@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DateTime from "~/lib/utils/datetime";
 import {
   Drawer,
@@ -61,6 +61,14 @@ export function ScheduleTimetableView({
     setSelectedLesson(lesson);
     setIsDrawerOpen(true);
   };
+
+  useEffect(() => {
+    try {
+      window.ym(101414600, "reachGoal", "timetable-view");
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
 
   return (
     <div className="bg-background text-foreground max-w-full overflow-x-auto">
