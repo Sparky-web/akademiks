@@ -237,7 +237,7 @@ export function abbreviateTitle(title: string): string {
   if (title.length <= 15) return title;
 
   return title
-    .replace(/[^a-zA-Zа-яА-Я]/g, "")
+    .replace(/[^a-zA-Zа-яА-Я\s]/g, "")
     .split(" ")
     .map((word) =>
       word.length === 1 ? word.charAt(0) : word.charAt(0).toUpperCase(),
