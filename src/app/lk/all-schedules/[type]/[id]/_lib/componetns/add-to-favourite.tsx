@@ -35,6 +35,7 @@ export default function AddToFavourite(props: ScheduleProps) {
       type: props.type,
       groupId: props.groupId,
       teacherId: props.teacherId,
+      classroomId: props.classroomId,
     });
 
     dispatch(addFavourite(data));

@@ -28,7 +28,7 @@ export const userRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      if (!input.groupId && !input.teacherId)
+      if (!input.groupId && !input.teacherId && !input.classroomId)
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Не указан ни groupId, ни teacherId",

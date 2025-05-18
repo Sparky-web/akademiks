@@ -83,6 +83,7 @@ export default async function SchedulePage(props: SchedulePageProps) {
           type={params.type}
           groupId={params.id}
           teacherId={params.id}
+          classroomId={+params.id}
         />
       </div>
       <Schedule

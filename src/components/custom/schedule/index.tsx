@@ -116,7 +116,7 @@ function Schedule(props: ScheduleProps) {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="bg-card hover:bg-accent font-medium !ring-0 focus-visible:ring-0"
+                    className="bg-card font-medium !ring-0 hover:bg-accent focus-visible:ring-0"
                   >
                     вид
                   </Button>
@@ -181,7 +181,7 @@ function Schedule(props: ScheduleProps) {
             {!isEmpty && foundDay && <Day day={foundDay} type={props.type} />}
 
             {!isEmpty && (
-              <P className="bg-muted mx-auto mt-3 w-fit rounded-xl px-3 py-1 text-sm font-medium">
+              <P className="mx-auto mt-3 w-fit rounded-xl bg-muted px-3 py-1 text-sm font-medium">
                 {DateTime.fromJSDate(selectedDayStart).toLocaleString(
                   DateTime.DATE_HUGE,
                 )}
@@ -206,7 +206,7 @@ function Schedule(props: ScheduleProps) {
         <DesktopSchedule schedule={data} weekStart={weekStart} />
       </div>
 
-      <Card className="bg-primary/10 mt-6 rounded-md border-none max-lg:w-full lg:max-w-[400px]">
+      <Card className="mt-6 rounded-md border-none bg-primary/10 max-lg:w-full lg:max-w-[400px]">
         <div className="text-sm">
           Если вы обнаружили ошибку в расписании, или другую неисправность,
           пожалуйста нажмите на кнопку ниже.
