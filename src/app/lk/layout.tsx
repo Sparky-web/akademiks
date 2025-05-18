@@ -13,7 +13,7 @@ export default async function LkLayout({
   const user = session?.user || null;
 
   return (
-    <div className="max-lg:app-container grid min-h-screen max-lg:pt-6 max-lg:pb-[calc(16px+84px)] lg:grid lg:h-screen lg:grid-cols-[250px_1fr]">
+    <div className="grid min-h-screen max-lg:container max-lg:pb-[calc(16px+84px)] max-lg:pt-6 lg:grid lg:h-screen lg:grid-cols-[250px_1fr]">
       <SetUserProvider userData={user}>
         <InstallProvider>
           <Menu />

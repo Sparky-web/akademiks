@@ -45,7 +45,7 @@ export default function DesktopLesson(props: LessonProps) {
             <Tooltip>
               <div className="items-top flex justify-between gap-2">
                 {type === "student" && (
-                  <div className="line-clamp-3 overflow-hidden text-sm font-medium">
+                  <div className="line-clamp-3 overflow-hidden text-sm font-medium break-words hyphens-auto">
                     {field.state.value.title}
                   </div>
                 )}

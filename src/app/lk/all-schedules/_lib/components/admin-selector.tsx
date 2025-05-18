@@ -42,7 +42,13 @@ export default function ScheduleAdminSelector() {
             onChange={(e) => setSearchGroup(e.target.value)}
             placeholder="Поиск"
           />
-          <div className="auto-fill-7xl grid gap-2">
+          <div
+            className="grid gap-2"
+            style={{
+              gridTemplateColumns:
+                "repeat(auto-fill, minmax(min(80px, 100%), 1fr))",
+            }}
+          >
             {groups
               .filter((group) =>
                 group.title.toLowerCase().includes(searchGroup.toLowerCase()),
@@ -79,7 +85,13 @@ export default function ScheduleAdminSelector() {
             onChange={(e) => setSearchTeacher(e.target.value)}
             placeholder="Поиск"
           />
-          <div className="auto-fill-9xl grid gap-2">
+          <div
+            className="grid gap-2"
+            style={{
+              gridTemplateColumns:
+                "repeat(auto-fill, minmax(min(130px, 100%), 1fr))",
+            }}
+          >
             {teachers
               .filter((teacher) =>
                 teacher.name
@@ -118,7 +130,13 @@ export default function ScheduleAdminSelector() {
             onChange={(e) => setSearchClassroom(e.target.value)}
             placeholder="Поиск"
           />
-          <div className="auto-fill-9xl grid gap-2">
+          <div
+            className="auto-fill-9xl grid gap-2"
+            style={{
+              gridTemplateColumns:
+                "repeat(auto-fill, minmax(min(80px, 100%), 1fr))",
+            }}
+          >
             {classrooms
               ?.filter((classroom) =>
                 classroom.name

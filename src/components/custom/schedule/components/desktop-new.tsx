@@ -38,6 +38,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Label } from "~/components/ui/label";
 import { FormState } from "@tanstack/react-form";
 import { useRouter } from "next/navigation";
+import useActiveLessonId from "../utils/use-active-lesson-id";
 
 interface ScheduleProps {
   schedule: Schedule;
@@ -225,19 +226,21 @@ export default function DesktopScheduleNew({
                                 <div className="grid h-full">
                                   <div className="flex h-full">
                                     {!!field.state.value?.length &&
-                                      field.state.value.map((_, index) => (
-                                        <DesktopLesson
-                                          lessonFormKey={key + `[${index}]`}
-                                          key={index}
-                                          initialLesson={
-                                            formValues.lessons[
-                                              `${dayI}_${i}`
-                                            ]?.[index]
-                                          }
-                                          type={type}
-                                          form={form}
-                                        />
-                                      ))}
+                                      field.state.value.map((_, index) => {
+                                        return (
+                                          <DesktopLesson
+                                            lessonFormKey={key + `[${index}]`}
+                                            key={index}
+                                            initialLesson={
+                                              formValues.lessons[
+                                                `${dayI}_${i}`
+                                              ]?.[index]
+                                            }
+                                            type={type}
+                                            form={form}
+                                          />
+                                        );
+                                      })}
 
                                     {!field.state.value?.length && (
                                       <span className="text-muted-foreground p-3 text-xs">
