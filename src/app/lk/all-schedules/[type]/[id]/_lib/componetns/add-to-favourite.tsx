@@ -33,9 +33,9 @@ export default function AddToFavourite(props: ScheduleProps) {
   const add = async () => {
     const data = await mutateAsync({
       type: props.type,
-      groupId: props.groupId,
-      teacherId: props.teacherId,
-      classroomId: props.classroomId,
+      ...(props.groupId ? { groupId: props.groupId } : {}),
+      ...(props.teacherId ? { teacherId: props.teacherId } : {}),
+      ...(props.classroomId ? { classroomId: props.classroomId } : {}),
     });
 
     dispatch(addFavourite(data));
