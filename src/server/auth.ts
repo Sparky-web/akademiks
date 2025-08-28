@@ -55,6 +55,7 @@ export const authOptions: NextAuthOptions = {
               include: {
                 Group: true,
                 Teacher: true,
+                Classroom: true,
               },
             },
           },

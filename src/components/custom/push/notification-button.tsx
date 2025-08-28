@@ -134,7 +134,7 @@ export default function NotificationButton() {
             size="icon"
             className={cn(
               `h-10 w-10 rounded-lg transition-all duration-300 ease-in-out`,
-              "from-primary hover:from-primary-600 to-primary/50 hover:to-primary/70 bg-gradient-to-br text-white hover:text-white",
+              "hover:from-primary-600 bg-gradient-to-br from-primary to-primary/50 text-white hover:to-primary/70 hover:text-white",
             )}
           >
             <Bell className={`h-5 w-5 ${subscription ? "" : ""}`} />
@@ -212,7 +212,7 @@ export default function NotificationButton() {
             size="icon"
             className={cn(
               `h-10 w-10 rounded-lg transition-all duration-300 ease-in-out`,
-              "from-primary hover:from-primary-600 to-primary/50 hover:to-primary/70 bg-gradient-to-br text-white hover:text-white",
+              "hover:from-primary-600 bg-gradient-to-br from-primary to-primary/50 text-white hover:to-primary/70 hover:text-white",
             )}
           >
             <Bell className={`h-5 w-5 ${subscription ? "" : ""}`} />

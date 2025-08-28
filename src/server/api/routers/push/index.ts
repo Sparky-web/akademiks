@@ -12,6 +12,17 @@ export default createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if (
+        await ctx.db.pushSubscription.findFirst({
+          where: {
+            userId: ctx.session.user.id,
+            endpoint: input.endpoint,
+            keys: input.keys,
+          },
+        })
+      )
+        return "ok";
+
       await ctx.db.pushSubscription.create({
         data: {
           endpoint: input.endpoint,
@@ -36,7 +47,7 @@ export default createTRPCRouter({
         },
       });
 
-      if (!subscription) throw new Error("Не найдена подписка на push");
+      if (!subscription) return "ok";
 
       await ctx.db.pushSubscription.delete({
         where: {
@@ -55,7 +66,7 @@ export default createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const subscription = await ctx.db.pushSubscription.findFirst({
         where: {
-          endpoint: input.subscriptionId,
+          endpoint: input.endpoint,
           userId: ctx.session.user.id,
         },
       });

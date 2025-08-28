@@ -1,4 +1,4 @@
-import { User, Users } from "lucide-react";
+import { MapPin, User, Users } from "lucide-react";
 import Link from "next/link";
 import { Button } from "~/components/ui/button";
 import { Favourite } from "~/types/schedule";
@@ -23,7 +23,7 @@ export default function FavouriteButton({ favourite }: FavouriteButtonProps) {
         href={`/lk/all-schedules/${favourite.type}/${favourite.classroomId}`}
       >
         <Button variant={"tenary"} className="rounded-xl px-4 py-1">
-          <User className="h-4 w-4" />
+          <MapPin className="h-4 w-4" />
           {favourite.Classroom?.name}
         </Button>
       </Link>

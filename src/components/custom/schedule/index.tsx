@@ -165,6 +165,10 @@ function Schedule(props: ScheduleProps) {
             {isEmpty && (
               <div className="mt-6">
                 <EmptyWeek
+                  isWeekNow={
+                    weekStart.toISOString() ===
+                    DateTime.now().startOf("week").toJSDate().toISOString()
+                  }
                   onReturn={() =>
                     setWeekStart(DateTime.now().startOf("week").toJSDate())
                   }
