@@ -73,7 +73,7 @@ const config = {
     { index: 4, start: "13:35", end: "15:10" },
     { index: 5, start: "15:40", end: "17:15" },
     { index: 6, start: "17:25", end: "19:00" },
-    // { index: 7, start: "19:20", end: "20:50" },
+    { index: 7, start: "17:25", end: "19:00" },
   ],
 };
 
