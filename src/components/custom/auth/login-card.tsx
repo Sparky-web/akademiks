@@ -117,9 +117,16 @@ export default function LoginCard() {
               нажмите здесь, чтобы зарегистрироваться
             </Link>
           </P>
-          <P className="text-sm leading-6 md:text-center">
-            Для сброса пароля обратитесь в учебную часть
-          </P>
+          {env.NEXT_PUBLIC_UNIVERSITY === "RGSU" ? (
+            <P className="text-sm leading-6 md:text-center">
+              Сброс пароля не предусмотрен, если вы забыли пароль -
+              рекомендуется создать новую учетную запись
+            </P>
+          ) : (
+            <P className="text-sm leading-6 md:text-center">
+              Для сброса пароля обратитесь в учебную часть
+            </P>
+          )}
         </div>
       </form>
     </Card>
