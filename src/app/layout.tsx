@@ -54,9 +54,30 @@ export default async function RootLayout({
         ></link>
       </head>
       <body className="bg-background text-foreground" suppressHydrationWarning>
-        <div
-          dangerouslySetInnerHTML={{
-            __html: `<!-- Google tag (gtag.js) -->
+        {env.NEXT_PUBLIC_UNIVERSITY === "RGSU" ? (
+          <div
+            dangerouslySetInnerHTML={{
+              __html: `
+              <!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=104601036', 'ym');
+
+    ym(104601036, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/104601036" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+          `,
+            }}
+          />
+        ) : (
+          <div
+            dangerouslySetInnerHTML={{
+              __html: `<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-W5V8WN3GB7"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -82,8 +103,9 @@ export default async function RootLayout({
 <noscript><div><img src="https://mc.yandex.ru/watch/101414600" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
 `,
-          }}
-        />
+            }}
+          />
+        )}
 
         <TRPCReactProvider>
           <ReduxProvider>{children}</ReduxProvider>
