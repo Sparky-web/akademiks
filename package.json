@@ -108,7 +108,6 @@
   "ct3aMetadata": {
     "initVersion": "7.37.0"
   },
-  "packageManager": "npm@11.1.0",
   "overrides": {
     "@types/react": "19.0.10",
     "@types/react-dom": "19.0.4"
