@@ -55,17 +55,17 @@ export default function Lesson({ slot, type }: LessonProps) {
 
               {type !== "classroom" && (
                 <div className="grid items-center gap-1">
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex flex-wrap items-baseline gap-2">
                     <div className="text-sm text-muted-foreground">
                       Аудитория:
                     </div>
 
-                    <Badge size={"sm"} className="text-white">
+                    <Badge size={"sm"} className="text-nowrap text-white">
                       {lesson.Classroom?.name}
                     </Badge>
 
                     {lesson.Classroom?.address ? (
-                      <div className="ml-2 flex items-baseline gap-2">
+                      <div className="flex items-baseline gap-2">
                         <MapPin className="h-4 w-4 translate-y-[3px] text-muted-foreground" />
                         <div className="text-sm text-muted-foreground">
                           {lesson.Classroom?.address}
