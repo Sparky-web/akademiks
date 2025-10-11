@@ -38,6 +38,7 @@ export const env = createEnv({
   client: {
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string(),
+    NEXT_PUBLIC_UNIVERSITY: z.literal('RGSU').optional().nullable()
   },
 
   /**
@@ -56,6 +57,7 @@ export const env = createEnv({
     DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET,
     VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    NEXT_PUBLIC_UNIVERSITY: process.env.NEXT_PUBLIC_UNIVERSITY
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

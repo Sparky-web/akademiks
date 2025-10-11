@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { env } from "~/env";
 
 function SelectSchedule() {
   const { groups, teachers, classrooms } = useAppSelector(
@@ -67,11 +68,14 @@ function SelectSchedule() {
               <SelectItem value="teacher" className="font-medium">
                 Преподаватель
               </SelectItem>
-              {!!classrooms?.length && (
-                <SelectItem value="classroom" className="font-medium">
-                  По аудитории
-                </SelectItem>
-              )}
+
+              {env.NEXT_PUBLIC_UNIVERSITY === "RGSU"
+                ? undefined
+                : !!classrooms?.length && (
+                    <SelectItem value="classroom" className="font-medium">
+                      По аудитории
+                    </SelectItem>
+                  )}
             </SelectContent>
           </Select>
         </div>

@@ -6,6 +6,7 @@ import Card, { CardTitle } from "~/components/custom/card";
 import WeekSelector from "~/components/custom/schedule/components/week-picker-desktop";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { env } from "~/env";
 import DateTime from "~/lib/utils/datetime";
 
 export default function ScheduleAdminSelector() {
@@ -46,7 +47,9 @@ export default function ScheduleAdminSelector() {
             className="grid gap-2"
             style={{
               gridTemplateColumns:
-                "repeat(auto-fill, minmax(min(80px, 100%), 1fr))",
+                env.NEXT_PUBLIC_UNIVERSITY === "RGSU"
+                  ? "repeat(auto-fill, minmax(min(175px, 100%), 1fr))"
+                  : "repeat(auto-fill, minmax(min(80px, 100%), 1fr))",
             }}
           >
             {groups

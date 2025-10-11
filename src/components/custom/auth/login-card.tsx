@@ -2,13 +2,15 @@
 
 import Card, { CardTitle } from "~/components/custom/card";
 import { H1, H2, H3, P } from "~/components/ui/typography";
-import Logo from "~/app/_lib/images/urtk-logo.png";
+import UrtkLogo from "~/app/_lib/images/urtk-logo.png";
+import RgsuLogo from "~/app/_lib/images/rgsu-logo.png";
 import Image from "next/image";
+import { env } from "~/env";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { getSession, signIn } from "next-auth/react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -19,6 +21,10 @@ import { setUser } from "../../../app/_lib/client-store/_lib/slices/user";
 export default function LoginCard() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const logo = useMemo(
+    () => (env.NEXT_PUBLIC_UNIVERSITY === "RGSU" ? RgsuLogo : UrtkLogo),
+    [env.NEXT_PUBLIC_UNIVERSITY],
+  );
 
   const utils = api.useUtils();
 
@@ -59,7 +65,7 @@ export default function LoginCard() {
         <div className="flex flex-wrap justify-between gap-4">
           <H2>Академикс</H2>
           <Image
-            src={Logo}
+            src={logo}
             alt="logo"
             width={136}
             height={26}

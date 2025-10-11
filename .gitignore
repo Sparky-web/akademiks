@@ -46,6 +46,9 @@ yarn-error.log*
 .idea
 certificates
 
+# generated files
+src/app/manifest.json
+
 table-convert/node_modules
 table-convert/package-lock.json
 table-convert/data.json

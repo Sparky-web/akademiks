@@ -2,13 +2,15 @@
 
 import Card, { CardTitle } from "~/components/custom/card";
 import { H1, H2, H3, P } from "~/components/ui/typography";
-import Logo from "~/app/_lib/images/urtk-logo.png";
+import UrtkLogo from "~/app/_lib/images/urtk-logo.png";
+import RgsuLogo from "~/app/_lib/images/rgsu-logo.png";
 import Image from "next/image";
+import { env } from "~/env";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { getSession, signIn } from "next-auth/react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -33,6 +35,10 @@ import { Checkbox } from "~/components/ui/checkbox";
 export default function LoginCard() {
   const groups = useAppSelector((e) => e.schedule.groups);
   const teachers = useAppSelector((e) => e.schedule.teachers);
+  const logo = useMemo(
+    () => (env.NEXT_PUBLIC_UNIVERSITY === "RGSU" ? RgsuLogo : UrtkLogo),
+    [env.NEXT_PUBLIC_UNIVERSITY],
+  );
 
   const { mutateAsync: register } = api.auth.register.useMutation();
   const { mutateAsync: update } = api.user.update.useMutation();
@@ -114,7 +120,7 @@ export default function LoginCard() {
         <div className="flex flex-wrap justify-between gap-4">
           <H2>Академикс</H2>
           <Image
-            src={Logo}
+            src={logo}
             alt="logo"
             width={136}
             height={26}
@@ -196,7 +202,7 @@ export default function LoginCard() {
             <div className="mt-2 grid gap-1.5">
               <Label>Выберите ваше расписание</Label>
               {groups && teachers && (
-                <Card className="bg-muted rounded-md">
+                <Card className="rounded-md bg-muted">
                   <div className="grid gap-3">
                     <form.Field
                       name="role"

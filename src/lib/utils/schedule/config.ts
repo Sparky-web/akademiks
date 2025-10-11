@@ -1,3 +1,5 @@
+import { env } from "process";
+
 const config = {
   days: {
     title: {
@@ -62,15 +64,25 @@ const config = {
     columnStart: "E",
     length: 5,
   },
-  timetable: [
-    { index: 1, start: "08:00", end: "09:35" },
-    { index: 2, start: "09:45", end: "11:20" },
-    { index: 3, start: "11:50", end: "13:25" },
-    { index: 4, start: "13:35", end: "15:10" },
-    { index: 5, start: "15:40", end: "17:15" },
-    { index: 6, start: "17:25", end: "19:00" },
-    { index: 7, start: "19:00", end: "20:30" },
-  ],
+  timetable:
+    env.NEXT_PUBLIC_UNIVERSITY === "RGSU"
+      ? [
+          { index: 1, start: "8:30", end: "10:00" },
+          { index: 2, start: "10:10", end: "11:40" },
+          { index: 3, start: "12:10", end: "13:40" },
+          { index: 4, start: "13:50", end: "15:20" },
+          { index: 5, start: "15:30", end: "17:00" },
+          { index: 6, start: "17:10", end: "18:40" },
+        ]
+      : [
+          { index: 1, start: "08:00", end: "09:35" },
+          { index: 2, start: "09:45", end: "11:20" },
+          { index: 3, start: "11:50", end: "13:25" },
+          { index: 4, start: "13:35", end: "15:10" },
+          { index: 5, start: "15:40", end: "17:15" },
+          { index: 6, start: "17:25", end: "19:00" },
+          { index: 7, start: "19:00", end: "20:30" },
+        ],
 };
 
 export default config;

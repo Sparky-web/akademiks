@@ -8,19 +8,19 @@ import { Toaster } from "~/components/ui/sonner";
 
 import { TRPCReactProvider } from "~/trpc/react";
 import { ReduxProvider } from "./_lib/context/redux";
-
-// import parseBackground from "~/lib/utils/parse-background";
-// parseBackground()
-
 import { api } from "~/trpc/server";
 import { SessionProvider } from "next-auth/react";
-// import { Provider } from "react-redux";
-// import store from "~/client-store";
+import { env } from "~/env";
+
+const universityName = env.NEXT_PUBLIC_UNIVERSITY === "RGSU" ? "РГСУ" : "УРТК";
+const universityFullName =
+  env.NEXT_PUBLIC_UNIVERSITY === "RGSU"
+    ? "Российского Государственного Социального Университета"
+    : "Уральского Радиотехнического Колледжа им. А.С. Попова";
 
 export const metadata: Metadata = {
-  title: "Академикс — расписание УРТК",
-  description:
-    "Платформа Свердловской области для просмотра расписания СПО. Расписания уральского радиотехнического колледжа им. А.С. Попова.",
+  title: `Академикс — расписание ${universityName}`,
+  description: `Платформа для просмотра расписания СПО и ВУЗов. Расписания ${universityFullName}.`,
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 

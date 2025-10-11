@@ -71,15 +71,15 @@ export function ScheduleTimetableView({
   }, []);
 
   return (
-    <div className="bg-background text-foreground max-w-full overflow-x-auto">
+    <div className="max-w-full overflow-x-auto bg-background text-foreground">
       <div className="min-w-[360px]">
         {/* Header row with days of the week */}
-        <div className="border-border grid grid-cols-[50px_repeat(6,1fr)] border-b">
+        <div className="grid grid-cols-[50px_repeat(6,1fr)] border-b border-border">
           <div className="p-1 text-xs"></div>
           {daysOfWeek.map((day, index) => (
             <div
               key={index}
-              className="border-border border-l p-2 text-center text-xs font-medium"
+              className="border-l border-border p-2 text-center text-xs font-medium"
             >
               {day}
             </div>
@@ -103,7 +103,7 @@ export function ScheduleTimetableView({
           return (
             <div
               key={slot.index}
-              className={`border-border grid grid-cols-[50px_repeat(6,1fr)] border-b`}
+              className={`grid grid-cols-[50px_repeat(6,1fr)] border-b border-border`}
               style={{ minHeight: rowHeight }}
             >
               {/* Time column */}
@@ -120,7 +120,7 @@ export function ScheduleTimetableView({
                 return (
                   <div
                     key={dayIndex}
-                    className="border-border relative border-l p-0"
+                    className="relative border-l border-border p-0"
                   >
                     <div className="absolute inset-0 p-0">
                       <div className="flex h-full w-full flex-col gap-0.5">
@@ -128,14 +128,14 @@ export function ScheduleTimetableView({
                           <div
                             key={lessonIndex}
                             className={cn(
-                              "bg-primary text-primary-foreground flex cursor-pointer flex-col rounded-sm p-0.5 text-xs dark:text-white",
+                              "flex cursor-pointer flex-col rounded-sm bg-primary p-0.5 text-xs text-primary-foreground dark:text-white",
                               "h-full",
                               lesson.Classroom?.name === "Дистант" &&
                                 "bg-purple-600",
                             )}
                             onClick={() => handleLessonClick(lesson)}
                           >
-                            <div className="line-clamp-3 font-medium break-words hyphens-auto">
+                            <div className="line-clamp-3 hyphens-auto break-words font-medium">
                               {abbreviateTitle(lesson.title)}
                             </div>
                             <div className="mt-auto grid gap-1">
@@ -173,13 +173,16 @@ export function ScheduleTimetableView({
           {selectedLesson && (
             <div className="mx-auto w-full">
               <DrawerHeader>
-                <DrawerTitle>{selectedLesson?.title}</DrawerTitle>
+                <DrawerTitle>
+                  {selectedLesson?.title}{" "}
+                  {selectedLesson?.type ? ` (${selectedLesson?.type})` : ""}
+                </DrawerTitle>
               </DrawerHeader>
 
               {selectedLesson && (
                 <div className="space-y-4 p-4">
                   <div className="flex items-center gap-2">
-                    <Calendar className="text-muted-foreground h-4 w-4" />
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span>
                       {DateTime.fromJSDate(
                         selectedLesson.startDay,
@@ -188,7 +191,7 @@ export function ScheduleTimetableView({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Clock className="text-muted-foreground h-4 w-4" />
+                    <Clock className="h-4 w-4 text-muted-foreground" />
                     <span>
                       {DateTime.fromJSDate(selectedLesson.start).toFormat(
                         "HH:mm",
@@ -201,20 +204,23 @@ export function ScheduleTimetableView({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <MapPin className="text-muted-foreground h-4 w-4" />
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
                     <span>
                       Аудитория:{" "}
                       {selectedLesson.Classroom?.name || "Не указана"}
+                      {selectedLesson.Classroom?.address
+                        ? ` – ${selectedLesson.Classroom.address}`
+                        : undefined}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <User className="text-muted-foreground h-4 w-4" />
+                    <User className="h-4 w-4 text-muted-foreground" />
                     <span>{selectedLesson.Teacher?.name || "Не указан"}</span>
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Users className="text-muted-foreground h-4 w-4" />
+                    <Users className="h-4 w-4 text-muted-foreground" />
                     <span>{selectedLesson.Group?.title || "Не указан"}</span>
                   </div>
                 </div>

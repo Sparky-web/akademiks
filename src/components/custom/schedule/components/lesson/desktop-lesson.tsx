@@ -45,7 +45,7 @@ export default function DesktopLesson(props: LessonProps) {
             <Tooltip>
               <div className="items-top flex justify-between gap-2">
                 {type === "student" && (
-                  <div className="line-clamp-3 overflow-hidden text-sm font-medium break-words hyphens-auto">
+                  <div className="line-clamp-3 overflow-hidden hyphens-auto break-words text-sm font-medium">
                     {field.state.value.title}
                   </div>
                 )}
@@ -97,18 +97,26 @@ export default function DesktopLesson(props: LessonProps) {
 
           {!field.state.value.isEditing && (
             <>
-              <div className="text-muted-foreground text-xs">
+              {field.state.value.type ? (
+                <div className="text-xs font-medium text-primary">
+                  {field.state.value.type}
+                </div>
+              ) : undefined}
+              <div className="text-xs text-muted-foreground">
                 {formatTime(field.state.value.start)} -{" "}
                 {formatTime(field.state.value.end)}
               </div>
               {type === "classroom" && (
-                <div className="text-muted-foreground text-xs">
+                <div className="text-xs text-muted-foreground">
                   {field.state.value.Group?.title || "Не указано"}
                 </div>
               )}
               {type !== "classroom" && (
-                <div className="text-muted-foreground text-xs">
+                <div className="text-xs text-muted-foreground">
                   {field.state.value.Classroom?.name || "Не указано"}
+                  {field.state.value.Classroom?.address
+                    ? ", " + field.state.value.Classroom?.address
+                    : ""}
                   {type === "student" &&
                     ", " + (field.state.value.Teacher?.name || "Не указано")}
                 </div>
