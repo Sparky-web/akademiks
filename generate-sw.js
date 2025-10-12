@@ -2,6 +2,8 @@
 
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Читаем переменную окружения UNIVERSITY
 const university = process.env.NEXT_PUBLIC_UNIVERSITY;
