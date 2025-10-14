@@ -93,7 +93,7 @@ export default async function parseBackground() {
     await Promise.all(
       chunks.map(async (groups) => {
         for (const group of groups) {
-          const weekCurrent = DateTime.now().startOf("week").minus({ week: 1 });
+          const weekCurrent = DateTime.now().startOf("week");
           const weekNext = weekCurrent.plus({ week: 1 });
 
           const weeks = [weekCurrent, weekNext];
