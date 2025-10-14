@@ -112,9 +112,10 @@ model Report {
 }
 
 model Group {
-  id    String @id @unique
-  title String
-  users User[]
+  id           String  @id @unique
+  title        String
+  additionalId String?
+  users        User[]
 
   Lessons   Lesson[]
   Favourite Favourite[]

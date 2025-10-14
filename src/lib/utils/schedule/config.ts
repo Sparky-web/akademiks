@@ -67,7 +67,7 @@ const config = {
   timetable:
     env.NEXT_PUBLIC_UNIVERSITY === "RGSU"
       ? [
-          { index: 1, start: "8:30", end: "10:00" },
+          { index: 1, start: "08:30", end: "10:00" },
           { index: 2, start: "10:10", end: "11:40" },
           { index: 3, start: "12:10", end: "13:40" },
           { index: 4, start: "13:50", end: "15:20" },

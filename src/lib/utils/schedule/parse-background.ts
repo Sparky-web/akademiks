@@ -16,6 +16,8 @@ import updateSchedule, {
 import { parseRgsuGroups } from "./rgsu/parse-groups";
 import { rgsuGetWeeklySchedule } from "./rgsu/parse-schedule";
 import { DateTime } from "luxon";
+import { LessonParsed } from "./flatten-schedule";
+import _ from "lodash";
 
 const scopes = [
   "https://www.googleapis.com/auth/spreadsheets",
@@ -86,18 +88,30 @@ export default async function parseBackground() {
   if (env.NEXT_PUBLIC_UNIVERSITY === "RGSU") {
     const groups = await parseRgsuGroups();
 
-    for (const group of groups) {
-      const weekCurrent = DateTime.now().startOf("week");
-      const weekNext = weekCurrent.plus({ week: 1 });
+    const chunks = _.chunk(groups, 10);
 
-      const weeks = [weekCurrent, weekNext];
+    await Promise.all(
+      chunks.map(async (groups) => {
+        for (const group of groups) {
+          const weekCurrent = DateTime.now().startOf("week").minus({ week: 1 });
+          const weekNext = weekCurrent.plus({ week: 1 });
 
-      for (const week of weeks) {
-        const schedule = await rgsuGetWeeklySchedule(group, week);
-        const result = await updateSchedule(schedule, true);
-        reports.push(result);
-      }
-    }
+          const weeks = [weekCurrent, weekNext];
+
+          const mergedSchedule: LessonParsed[] = [];
+          for (const week of weeks) {
+            const schedule = await rgsuGetWeeklySchedule(
+              group.id,
+              group.title,
+              week,
+            );
+            mergedSchedule.push(...schedule);
+          }
+          const result = await updateSchedule(mergedSchedule, true);
+          reports.push(result);
+        }
+      }),
+    );
   } else {
     const config = await db.config.findFirst({
       select: {

@@ -1,55 +1,104 @@
 import axios from "axios";
+import { db } from "~/server/db";
+
+interface RGSUGroupData {
+  id: string;
+  name: string;
+}
 
 interface RGSUGroupsResponse {
-  query: string;
-  suggestions: string[];
+  success: boolean;
+  data: RGSUGroupData[];
+}
+
+/**
+ * Обновляет additional_id для всех групп из RGSU API
+ * @returns Promise<{ updated: number; total: number; errors: string[] }> - результат обновления
+ */
+export async function updateRgsuGroupIds(): Promise<{
+  updated: number;
+  total: number;
+  errors: string[];
+}> {
+  const groups = await db.group.findMany();
+  let updated = 0;
+  const errors: string[] = [];
+
+  for (const group of groups) {
+    try {
+      const response = await axios.get<RGSUGroupsResponse>(
+        `https://rgsu.net/students/schedule/?nc_ctpl=446&q=${encodeURIComponent(group.title)}`,
+        {
+          headers: {
+            accept: "*/*",
+            "accept-language": "en-US,en;q=0.9,ru-RU;q=0.8,ru;q=0.7",
+            "sec-ch-ua":
+              '"Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"macOS"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+          },
+          timeout: 10000,
+        },
+      );
+
+      if (response.data.success && Array.isArray(response.data.data)) {
+        // Ищем точное совпадение по названию группы
+        const exactMatch = response.data.data.find(
+          (item) => item.name === group.title,
+        );
+
+        if (exactMatch) {
+          // Обновляем additional_id в базе данных
+          await db.group.update({
+            where: { id: group.id },
+            data: { additionalId: exactMatch.id },
+          });
+
+          console.log(
+            `Обновлен additional_id для группы ${group.title}: ${exactMatch.id}`,
+          );
+          updated++;
+        } else {
+          console.log(
+            `Точное совпадение не найдено для группы: ${group.title}`,
+          );
+          errors.push(
+            `Точное совпадение не найдено для группы: ${group.title}`,
+          );
+        }
+      }
+    } catch (groupError) {
+      console.error(`Ошибка при обновлении группы ${group.title}:`, groupError);
+      errors.push(`Ошибка при обновлении группы ${group.title}: ${groupError}`);
+    }
+  }
+
+  return {
+    updated,
+    total: groups.length,
+    errors,
+  };
 }
 
 /**
  * Парсит все группы из RGSU API
  * @returns Promise<string[]> - массив строк с названиями всех групп
  */
-export async function parseRgsuGroups(): Promise<string[]> {
+export async function parseRgsuGroups(): Promise<
+  { id: string; title: string }[]
+> {
   try {
-    const response = await axios.post<RGSUGroupsResponse>(
-      "https://rgsu.net/for-students/timetable/timetable/novyy-format-den-json.html?mode=group&filial=%D0%92%D0%A3%D0%97",
-      "group=-", // Используем "-" для получения всех групп
-      {
-        headers: {
-          accept: "text/plain, */*; q=0.01",
-          "accept-language": "en-US,en;q=0.9,ru-RU;q=0.8,ru;q=0.7",
-          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
-          "sec-ch-ua":
-            '"Chromium";v="140", "Not=A?Brand";v="24", "Google Chrome";v="140"',
-          "sec-ch-ua-mobile": "?0",
-          "sec-ch-ua-platform": '"macOS"',
-          "sec-fetch-dest": "empty",
-          "sec-fetch-mode": "cors",
-          "sec-fetch-site": "same-origin",
-          "x-requested-with": "XMLHttpRequest",
-        },
-        timeout: 10000,
-      },
-    );
-
-    if (response.data && Array.isArray(response.data.suggestions)) {
-      return response.data.suggestions;
-    }
-
-    throw new Error("Неверный формат ответа от API");
+    const groups = await db.group.findMany({
+      where: { additionalId: { not: null } },
+    });
+    return groups
+      .filter((group) => group.additionalId)
+      .map((group) => ({ id: group.additionalId!, title: group.title }));
   } catch (error) {
     console.error("Ошибка при парсинге групп из RGSU:", error);
-
-    if (axios.isAxiosError(error)) {
-      if (error.response) {
-        throw new Error(
-          `Ошибка сервера: ${error.response.status} ${error.response.statusText}`,
-        );
-      } else if (error.request) {
-        throw new Error("Ошибка сети: не удалось получить ответ от сервера");
-      }
-    }
-
     throw new Error("Неизвестная ошибка при парсинге групп");
   }
 }
