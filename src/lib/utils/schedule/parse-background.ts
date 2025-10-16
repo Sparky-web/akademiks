@@ -105,8 +105,11 @@ export default async function parseBackground() {
               group.title,
               week,
             );
+
+            console.log(schedule);
             mergedSchedule.push(...schedule);
           }
+
           const result = await updateSchedule(mergedSchedule, true);
           reports.push(result);
         }

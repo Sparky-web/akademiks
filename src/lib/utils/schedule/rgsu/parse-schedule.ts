@@ -18,7 +18,7 @@ interface RGSULessonData {
 
 interface RGSUWeeklySchedule {
   [timeSlot: string]: {
-    [date: string]: RGSULessonData | [];
+    [date: string]: RGSULessonData | RGSULessonData[];
   };
 }
 
@@ -143,8 +143,12 @@ function parseWeeklyTimetable(
       const timeFromParts = timeFrom.split(":");
       const timeToParts = timeTo.split(":");
 
+      const lessonsArray = Array.isArray(lessonData)
+        ? lessonData
+        : [lessonData];
+
       // Если занятие пустое (массив), пропускаем
-      if (Array.isArray(lessonData)) {
+      if (lessonsArray.length === 0) {
         lessons.push({
           index: timeSlotIndex,
           title: null,
@@ -166,43 +170,45 @@ function parseWeeklyTimetable(
         return;
       }
 
-      // Парсим данные занятия
-      const { discipline, teacherName, type, address, auditorium, online } =
-        lessonData;
+      for (const lessonData of lessonsArray) {
+        // Парсим данные занятия
+        const { discipline, teacherName, type, address, auditorium, online } =
+          lessonData;
 
-      // Формируем classroom
-      let classroom = "";
-      if (online) {
-        classroom = "Онлайн";
-      } else if (auditorium) {
-        classroom = auditorium;
-      } else {
-        classroom = "Не указан";
-      }
+        // Формируем classroom
+        let classroom = "";
+        if (online) {
+          classroom = "Онлайн";
+        } else if (auditorium) {
+          classroom = auditorium;
+        } else {
+          classroom = "Не указан";
+        }
 
-      if (timeFromParts.length === 2 && timeToParts.length === 2) {
-        lessons.push({
-          index: timeSlotIndex,
-          type: type,
-          title: discipline,
-          classroom,
-          classroomAddress: typeof address === "string" ? address : "",
-          teacher: teacherName || "Не указан",
-          start: date
-            .plus({
-              hours: parseInt(timeFromParts[0]!),
-              minutes: parseInt(timeFromParts[1]!),
-            })
-            .toJSDate(),
-          end: date
-            .plus({
-              hours: parseInt(timeToParts[0]!),
-              minutes: parseInt(timeToParts[1]!),
-            })
-            .toJSDate(),
-          group: groupTitle,
-          subgroup: null,
-        });
+        if (timeFromParts.length === 2 && timeToParts.length === 2) {
+          lessons.push({
+            index: timeSlotIndex,
+            type: type,
+            title: discipline,
+            classroom,
+            classroomAddress: typeof address === "string" ? address : "",
+            teacher: teacherName || "Не указан",
+            start: date
+              .plus({
+                hours: parseInt(timeFromParts[0]!),
+                minutes: parseInt(timeFromParts[1]!),
+              })
+              .toJSDate(),
+            end: date
+              .plus({
+                hours: parseInt(timeToParts[0]!),
+                minutes: parseInt(timeToParts[1]!),
+              })
+              .toJSDate(),
+            group: groupTitle,
+            subgroup: null,
+          });
+        }
       }
     });
   });
