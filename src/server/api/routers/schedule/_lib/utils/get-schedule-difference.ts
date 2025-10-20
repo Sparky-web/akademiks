@@ -3,6 +3,7 @@ import getPeriod from "~/lib/utils/schedule/get-period";
 import getUniqueGroups from "~/lib/utils/schedule/get-unique-groups";
 import { db } from "~/server/db";
 import { findMatchingLessons } from "./quick-find-matching-lesson";
+import { update } from "lodash";
 
 export default async function getScheduleDifference(schedule: LessonParsed[]) {
   const groups = getUniqueGroups(schedule);
@@ -33,7 +34,6 @@ export default async function getScheduleDifference(schedule: LessonParsed[]) {
   const updated = [];
 
   for (let lesson of schedule) {
-    // const foundBase = fetched.filter(e => e.start.toString() === lesson.start.toString() && e.end.toString() === lesson.end.toString() && e.Group?.title === lesson.group)
     const foundBase = findMatchingLessons(fetched, lesson);
 
     if (foundBase.length && lesson.title === null && !lesson.subgroup) {
@@ -78,10 +78,26 @@ export default async function getScheduleDifference(schedule: LessonParsed[]) {
         to: lesson,
       });
       continue;
-    } else {
-      updated.push({ from: foundBase[0], to: lesson });
+    }
+
+    const sameSlot = schedule.filter(
+      (e) => e.start.toString() === lesson.start.toString(),
+    );
+    sameSlot.sort((a, b) => a.title?.localeCompare(b.title || "") || 0);
+
+    if (sameSlot.length > foundBase.length) {
+      updated.push({ from: null, to: lesson });
       continue;
     }
+
+    if (foundBase.length > 1) {
+      updated.push(...foundBase.map((e) => ({ from: e, to: null })));
+      updated.push(...sameSlot.map((e) => ({ from: null, to: e })));
+      continue;
+    }
+
+    updated.push({ from: foundBase[0], to: lesson });
+    continue;
   }
 
   return updated;

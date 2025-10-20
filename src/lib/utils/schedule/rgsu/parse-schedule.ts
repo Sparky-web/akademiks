@@ -143,9 +143,7 @@ function parseWeeklyTimetable(
       const timeFromParts = timeFrom.split(":");
       const timeToParts = timeTo.split(":");
 
-      const lessonsArray = Array.isArray(lessonData)
-        ? lessonData
-        : [lessonData];
+      let lessonsArray = Array.isArray(lessonData) ? lessonData : [lessonData];
 
       // Если занятие пустое (массив), пропускаем
       if (lessonsArray.length === 0) {
@@ -170,6 +168,8 @@ function parseWeeklyTimetable(
         return;
       }
 
+      lessonsArray.sort((a, b) => a.teacherName.localeCompare(b.teacherName));
+
       for (const lessonData of lessonsArray) {
         // Парсим данные занятия
         const { discipline, teacherName, type, address, auditorium, online } =
@@ -192,7 +192,9 @@ function parseWeeklyTimetable(
             title: discipline,
             classroom,
             classroomAddress: typeof address === "string" ? address : "",
-            teacher: teacherName || "Не указан",
+            teacher: teacherName
+              ? teacherName?.replace(/[^a-zA-Zа-яА-ЯёЁ\s]/g, "")
+              : "Не указан",
             start: date
               .plus({
                 hours: parseInt(timeFromParts[0]!),

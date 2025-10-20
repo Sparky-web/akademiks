@@ -106,7 +106,6 @@ export default async function parseBackground() {
               week,
             );
 
-            console.log(schedule);
             mergedSchedule.push(...schedule);
           }
 
