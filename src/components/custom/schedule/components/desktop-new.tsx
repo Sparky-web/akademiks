@@ -161,11 +161,11 @@ export default function DesktopScheduleNew({
             )}
         </div>
       )}
-      <ScrollArea className="bg-card relative h-[80dvh] w-full max-w-full rounded-lg">
+      <ScrollArea className="relative h-[80dvh] w-full max-w-full rounded-lg bg-card">
         <Table className="">
-          <TableHeader className="bg-muted sticky top-0 z-20">
+          <TableHeader className="sticky top-0 z-20 bg-muted">
             <TableRow className="hover:bg-muted">
-              <TableHead className="bg-muted sticky left-0 z-10 p-3">
+              <TableHead className="sticky left-0 z-10 bg-muted p-3">
                 №
               </TableHead>
               {days.map((day, i) => {
@@ -181,7 +181,7 @@ export default function DesktopScheduleNew({
                       isToday && "bg-primary/10 text-primary",
                     )}
                   >
-                    <div className="text-foreground grid gap-1">
+                    <div className="grid gap-1 text-foreground">
                       <span>
                         {DateTime.fromJSDate(day)
                           .setLocale("ru")
@@ -199,10 +199,10 @@ export default function DesktopScheduleNew({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {new Array(7).fill("").map((e, i) => {
+            {new Array(8).fill("").map((e, i) => {
               return (
                 <TableRow key={i} className="hover:bg-inherit">
-                  <TableCell className="bg-muted sticky left-0 z-10 p-3">
+                  <TableCell className="sticky left-0 z-10 bg-muted p-3">
                     {i + 1}
                   </TableCell>
                   {Array(6)
@@ -221,7 +221,7 @@ export default function DesktopScheduleNew({
                             return (
                               <TableCell
                                 key={dayI}
-                                className="border-x-border relative h-[150px] min-h-[150px] min-w-[250px] border p-0 align-top"
+                                className="relative h-[150px] min-h-[150px] min-w-[250px] border border-x-border p-0 align-top"
                               >
                                 <div className="grid h-full">
                                   <div className="flex h-full">
@@ -243,7 +243,7 @@ export default function DesktopScheduleNew({
                                       })}
 
                                     {!field.state.value?.length && (
-                                      <span className="text-muted-foreground p-3 text-xs">
+                                      <span className="p-3 text-xs text-muted-foreground">
                                         нет пары
                                       </span>
                                     )}
@@ -251,7 +251,7 @@ export default function DesktopScheduleNew({
 
                                   {/* {!!field.state.value?.length && field.state.value?.find(e => e && e.id === activeLessonId) && <ActiveIndicatiorDesktop start={field.state.value?.[0].start} end={field.state.value?.[0].end} />} */}
                                   {isAdmin && (
-                                    <div className="absolute right-2 bottom-2">
+                                    <div className="absolute bottom-2 right-2">
                                       <Button
                                         onClick={() =>
                                           field.pushValue(
@@ -398,7 +398,7 @@ export const scheduleToFormValues = (schedule: Schedule, weekStart: Date) => {
 
   for (let d = 0; d < days.length; d++) {
     const day = days[d];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 9; i++) {
       const foundDay = schedule.data.find(
         (e) => e.start.toISOString() === day.toISOString(),
       );
