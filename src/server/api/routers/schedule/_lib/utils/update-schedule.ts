@@ -10,6 +10,8 @@ import { Lesson } from "~/types/schedule";
 import notify, { NotificationResultItem } from "./notify";
 import notifyFromReports from "./notify-from-reports";
 import generateReport from "./generate-report";
+import { env } from "~/env";
+import { rgsuGetScheduleDifference } from "./rgsu-get-schedule-difference/rgsu-get-schedule-difference";
 
 export interface ResultItem {
   type: "add" | "update" | "delete";
@@ -70,7 +72,11 @@ export default async function updateSchedule(
   };
 
   try {
-    const difference = await getScheduleDifference(schedule);
+    const difference =
+      env.NEXT_PUBLIC_UNIVERSITY === "RGSU"
+        ? await rgsuGetScheduleDifference(schedule)
+        : await getScheduleDifference(schedule);
+
     for (let lesson of difference) {
       if (!lesson.from && lesson.to) {
         try {
@@ -149,6 +155,7 @@ export default async function updateSchedule(
           const found = await db.lesson.findFirst({
             where: {
               start: lesson.from.start,
+              ...(lesson.from.title ? { title: lesson.from.title } : {}),
               end: lesson.from.end,
               Group: {
                 id: lesson.from.groupId,

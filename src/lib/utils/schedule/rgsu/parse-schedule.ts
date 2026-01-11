@@ -168,7 +168,7 @@ function parseWeeklyTimetable(
         return;
       }
 
-      lessonsArray.sort((a, b) => a.teacherName.localeCompare(b.teacherName));
+      lessonsArray.sort((a, b) => a.discipline.localeCompare(b.discipline));
 
       for (const lessonData of lessonsArray) {
         // Парсим данные занятия
