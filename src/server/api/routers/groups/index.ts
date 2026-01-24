@@ -93,5 +93,22 @@ export default createTRPCRouter({
           });
         }
       }
+
+      const data = await ctx.db.group.findMany({
+        where: {
+          id: {
+            notIn: input.groups.map((group) => translit(group.title)),
+          },
+        },
+      });
+
+      for (const groupToDelete of data) {
+        console.log(`Группа ${groupToDelete.title} удалена`);
+        await ctx.db.group.delete({
+          where: {
+            id: groupToDelete.id,
+          },
+        });
+      }
     }),
 });
