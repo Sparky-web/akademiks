@@ -9,6 +9,7 @@ import {
   AlertCircleIcon,
   BookOpen,
   House,
+  UploadCloud,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,6 +18,7 @@ import { cn } from "~/lib/utils";
 import MobileMenu from "./mobile";
 import DesktopMenu from "./desktop";
 import { useAppSelector } from "../../../app/_lib/client-store";
+import { env } from "~/env";
 
 const menu: MenuItem[] = [
   {
@@ -59,6 +61,14 @@ export default function Menu() {
       path: "/lk/add-schedule",
       icon: Upload,
     });
+
+    if (env.NEXT_PUBLIC_UNIVERSITY === "RGSU") {
+      desktopMenu.push({
+        title: "Загрузка групп",
+        path: "/lk/update-groups",
+        icon: UploadCloud,
+      });
+    }
 
     desktopMenu.push({
       title: "Пользователи",

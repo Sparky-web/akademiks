@@ -22,7 +22,7 @@ interface RGSUWeeklySchedule {
   };
 }
 
-interface RGSUResponse {
+export interface RGSUResponse {
   success: boolean;
   data: {
     groupName: string;
@@ -88,9 +88,10 @@ async function getWeeklyResponse(
 /**
  * Парсит данные недельного расписания из нового API и возвращает плоский массив уроков
  */
-function parseWeeklyTimetable(
+export function parseWeeklyTimetable(
   scheduleData: RGSUWeeklySchedule,
   groupTitle: string,
+  isTeachersSchedule = false,
 ): LessonParsed[] {
   const lessons: LessonParsed[] = [];
   const allDates = new Set<string>();

@@ -87,12 +87,6 @@ export default async function parseBackground() {
 
   if (env.NEXT_PUBLIC_UNIVERSITY === "RGSU") {
     const groups = await parseRgsuGroups();
-    // const groups = [
-    //   {
-    //     title: "АФК-Б-0-Д-2025-1",
-    //     id: "16884",
-    //   },
-    // ];
 
     const chunks = _.chunk(groups, 10);
 
