@@ -88,11 +88,12 @@ export default async function parseBackground() {
   if (env.NEXT_PUBLIC_UNIVERSITY === "RGSU") {
     const groups = await parseRgsuGroups();
 
-    const chunks = _.chunk(groups, 10);
+    const chunks = _.chunk(groups, 100);
+    let i = 0;
 
-    await Promise.all(
-      chunks.map(async (groups) => {
-        for (const group of groups) {
+    for (const chunk of chunks) {
+      await Promise.all(
+        chunk.map(async (group) => {
           const weekCurrent = DateTime.now().startOf("week");
           const weekNext = weekCurrent.plus({ week: 1 });
 
@@ -111,9 +112,9 @@ export default async function parseBackground() {
 
           const result = await updateSchedule(mergedSchedule, true);
           reports.push(result);
-        }
-      }),
-    );
+        }),
+      );
+    }
   } else {
     const config = await db.config.findFirst({
       select: {
