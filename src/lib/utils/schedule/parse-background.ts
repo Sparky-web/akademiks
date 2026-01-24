@@ -88,10 +88,11 @@ export default async function parseBackground() {
   if (env.NEXT_PUBLIC_UNIVERSITY === "RGSU") {
     const groups = await parseRgsuGroups();
 
-    const chunks = _.chunk(groups, 100);
+    const chunks = _.chunk(groups, 50);
     let i = 0;
 
     for (const chunk of chunks) {
+      console.log(`${i++}/${chunks.length}`);
       await Promise.all(
         chunk.map(async (group) => {
           const weekCurrent = DateTime.now().startOf("week");
