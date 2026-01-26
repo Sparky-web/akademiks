@@ -63,7 +63,7 @@ async function getWeeklyResponse(
 ): Promise<RGSUResponse> {
   try {
     const response = await axios.get<RGSUResponse>(
-      `${TIMETABLE_URL}?nc_ctpl=410&date_from=${dateFrom}&date_to=${dateTo}&group=${groupId}`,
+      `${TIMETABLE_URL}?nc_ctpl=827&date_from=${dateFrom}&date_to=${dateTo}&group=${groupId}`,
       {
         headers: HEADERS,
         timeout: 10000,
@@ -194,7 +194,7 @@ export function parseWeeklyTimetable(
             classroom,
             classroomAddress: typeof address === "string" ? address : "",
             teacher: teacherName
-              ? teacherName?.replace(/[^a-zA-Zа-яА-ЯёЁ\s]/g, "")
+              ? teacherName?.replace(/[^a-zA-Zа-яА-ЯёЁ\s]/g, "") || "Не указан"
               : "Не указан",
             start: date
               .plus({
