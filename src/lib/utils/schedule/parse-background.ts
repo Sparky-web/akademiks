@@ -18,6 +18,7 @@ import { rgsuGetWeeklySchedule } from "./rgsu/parse-schedule";
 import { DateTime } from "luxon";
 import { LessonParsed } from "./flatten-schedule";
 import _ from "lodash";
+import { rgsuGetToken } from "./rgsu/get-token";
 
 const scopes = [
   "https://www.googleapis.com/auth/spreadsheets",
@@ -91,6 +92,8 @@ export default async function parseBackground() {
     const chunks = _.chunk(groups, 50);
     let i = 0;
 
+    const tokens = await rgsuGetToken();
+
     for (const chunk of chunks) {
       console.log(`${i++}/${chunks.length}`);
       await Promise.all(
@@ -106,6 +109,7 @@ export default async function parseBackground() {
               group.id,
               group.title,
               week,
+              tokens,
             );
 
             mergedSchedule.push(...schedule);

@@ -3,6 +3,8 @@ import * as cheerio from "cheerio";
 import { DateTime } from "luxon";
 import config from "../config";
 import { LessonParsed } from "../flatten-schedule";
+import { RgsuTokens } from "./get-token";
+import FormData from "form-data";
 
 const rgsuTimetable = config.timetable;
 
@@ -43,14 +45,21 @@ const TIMETABLE_URL = "https://rgsu.net/students/schedule/";
 
 const HEADERS = {
   accept: "*/*",
-  "accept-language": "en-US,en;q=0.9,ru-RU;q=0.8,ru;q=0.7",
-  "sec-ch-ua":
-    '"Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
-  "sec-ch-ua-mobile": "?0",
+  "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+  "cache-control": "no-cache",
+  pragma: "no-cache",
+  priority: "u=1, i",
   "sec-ch-ua-platform": '"macOS"',
   "sec-fetch-dest": "empty",
   "sec-fetch-mode": "cors",
   "sec-fetch-site": "same-origin",
+  "x-requested-with": "XMLHttpRequest",
+  "user-agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+  referer: "https://rgsu.net/students/schedule",
+  "sec-ch-ua": `"Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"`,
+  "sec-ch-ua-mobile": "?0",
+  origin: "https://rgsu.net",
 };
 
 /**
@@ -60,12 +69,23 @@ async function getWeeklyResponse(
   groupId: string,
   dateFrom: string,
   dateTo: string,
+  tokens: RgsuTokens,
 ): Promise<RGSUResponse> {
   try {
-    const response = await axios.get<RGSUResponse>(
-      `${TIMETABLE_URL}?nc_ctpl=827&date_from=${dateFrom}&date_to=${dateTo}&group=${groupId}`,
+    const formData = new FormData();
+    formData.append("csrf_token", tokens.csrfToken);
+    formData.append("check_token", tokens.checkToken);
+
+    const response = await axios.post<RGSUResponse>(
+      `${TIMETABLE_URL}?nc_ctpl=846&date_from=${dateFrom}&date_to=${dateTo}&group=${groupId}&token=no+token`,
+      formData,
       {
-        headers: HEADERS,
+        headers: {
+          ...HEADERS,
+          "x-csrf-token": tokens.csrfToken,
+          cookie: `session_captcha=${tokens.csrfToken};`,
+        },
+        withCredentials: true,
         timeout: 10000,
       },
     );
@@ -270,7 +290,8 @@ function generateEmptyWeekSchedule(
 export async function rgsuGetWeeklySchedule(
   groupId: string,
   groupTitle: string,
-  weekStart?: DateTime,
+  weekStart: DateTime,
+  tokens: RgsuTokens,
 ): Promise<LessonParsed[]> {
   try {
     // Определяем дату начала недели
@@ -292,6 +313,7 @@ export async function rgsuGetWeeklySchedule(
       groupId,
       startDateString,
       endDateString,
+      tokens,
     );
 
     if (!data.success || !data.data.schedule) {
