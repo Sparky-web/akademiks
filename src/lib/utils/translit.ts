@@ -44,6 +44,7 @@ const translit = (name: string) => {
       .replace(/[а-яё]/gi, function (match) {
         return matchTable[match.toLowerCase()] || "";
       })
+      .replace(/ /g, "-")
       .replace(/[^a-zA-Z\d\s-]/g, "");
   } else {
     return name
