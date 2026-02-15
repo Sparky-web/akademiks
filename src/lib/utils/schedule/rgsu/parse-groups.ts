@@ -1,5 +1,6 @@
 import axios from "axios";
 import { db } from "~/server/db";
+import { rgsuGetToken } from "./get-token";
 
 interface RGSUGroupData {
   id: string;
@@ -20,27 +21,44 @@ export async function updateRgsuGroupIds(): Promise<{
   total: number;
   errors: string[];
 }> {
+  const tokens = await rgsuGetToken();
+
   const groups = await db.group.findMany();
   let updated = 0;
   const errors: string[] = [];
 
   for (const group of groups) {
+    const formData = new FormData();
+    formData.append("csrf_token", tokens.csrfToken);
+    formData.append("check_token", tokens.checkToken);
+
     try {
-      const response = await axios.get<RGSUGroupsResponse>(
-        `https://rgsu.net/students/schedule/?nc_ctpl=446&q=${encodeURIComponent(group.title)}`,
+      const response = await axios.post<RGSUGroupsResponse>(
+        `https://rgsu.net/students/schedule/?nc_ctpl=446&q=${encodeURIComponent(group.title)}&filial=&token=undefined`,
+        formData,
         {
           headers: {
             accept: "*/*",
-            "accept-language": "en-US,en;q=0.9,ru-RU;q=0.8,ru;q=0.7",
-            "sec-ch-ua":
-              '"Google Chrome";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
-            "sec-ch-ua-mobile": "?0",
+            "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
+            "cache-control": "no-cache",
+            pragma: "no-cache",
+            priority: "u=1, i",
             "sec-ch-ua-platform": '"macOS"',
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
+            "x-requested-with": "XMLHttpRequest",
+            "user-agent":
+              "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            referer: "https://rgsu.net/students/schedule",
+            "sec-ch-ua": `"Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"`,
+            "sec-ch-ua-mobile": "?0",
+            origin: "https://rgsu.net",
+            "x-csrf-token": tokens.csrfToken,
+            cookie: `session_captcha=${tokens.csrfToken};`,
           },
           timeout: 10000,
+          withCredentials: true,
         },
       );
 
