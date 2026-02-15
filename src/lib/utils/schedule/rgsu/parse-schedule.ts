@@ -316,6 +316,10 @@ export async function rgsuGetWeeklySchedule(
       tokens,
     );
 
+    if (!data.success) {
+      throw new Error(JSON.stringify(data));
+    }
+
     if (!data.success || !data.data.schedule) {
       // Если данные пустые, возвращаем пустой массив
       return [];

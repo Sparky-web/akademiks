@@ -104,21 +104,42 @@ export default async function parseBackground() {
           const weeks = [weekCurrent, weekNext];
 
           const mergedSchedule: LessonParsed[] = [];
-          for (const week of weeks) {
-            const schedule = await rgsuGetWeeklySchedule(
-              group.id,
-              group.title,
-              week,
-              tokens,
-            );
+          try {
+            for (const week of weeks) {
+              const schedule = await rgsuGetWeeklySchedule(
+                group.id,
+                group.title,
+                week,
+                tokens,
+              );
 
-            mergedSchedule.push(...schedule);
+              mergedSchedule.push(...schedule);
+            }
+
+            const result = await updateSchedule(mergedSchedule, true);
+            reports.push(result);
+          } catch (err) {
+            const message = `Ошибка парсинга группы: ${group.title} ${group.id}`;
+            console.error(message, err);
+            reports.push({
+              error: `${message} ${err}`,
+              summary: {
+                added: 0,
+                updated: 0,
+                deleted: 0,
+                errors: 0,
+                notificationsSent: 0,
+                notificationsError: 0,
+                groupsAffected: [],
+                teachersAffected: [],
+              },
+              result: [],
+              notificationResult: [],
+            });
           }
-
-          const result = await updateSchedule(mergedSchedule, true);
-          reports.push(result);
         }),
       );
+      await new Promise((r) => setTimeout(r, 3000));
     }
   } else {
     const config = await db.config.findFirst({
