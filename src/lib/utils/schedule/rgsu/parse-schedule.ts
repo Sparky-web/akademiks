@@ -6,8 +6,8 @@ import { LessonParsed } from "../flatten-schedule";
 import { RgsuTokens } from "./get-token";
 import FormData from "form-data";
 import { env } from "~/env";
-import { HttpsProxyAgent } from "https-proxy-agent";
-import { HttpProxyAgent } from "http-proxy-agent";
+// import { HttpsProxyAgent } from "https-proxy-agent";
+// import { HttpProxyAgent } from "http-proxy-agent";
 
 const rgsuTimetable = config.timetable;
 
@@ -56,19 +56,19 @@ const proxyConfig = env.PROXY_PORT
   : null;
 
 // Generate proxy URL
-const proxyUrl = proxyConfig
-  ? `http://${proxyConfig.auth.username}:${proxyConfig.auth.password}@${proxyConfig.host}:${proxyConfig.port}`
-  : null;
+// const proxyUrl = proxyConfig
+//   ? `http://${proxyConfig.auth.username}:${proxyConfig.auth.password}@${proxyConfig.host}:${proxyConfig.port}`
+//   : null;
 
-const client = axios.create(
-  proxyUrl
-    ? {
-        httpsAgent: new HttpsProxyAgent(proxyUrl),
-        httpAgent: new HttpProxyAgent(proxyUrl),
-        proxy: false,
-      }
-    : {},
-);
+// const client = axios.create(
+//   proxyUrl
+//     ? {
+//         httpsAgent: new HttpsProxyAgent(proxyUrl),
+//         httpAgent: new HttpProxyAgent(proxyUrl),
+//         proxy: false,
+//       }
+//     : {},
+// );
 
 // Конфигурация для запросов
 const TIMETABLE_URL = "https://rgsu.net/students/schedule/";

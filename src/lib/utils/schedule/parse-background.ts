@@ -142,7 +142,7 @@ export default async function parseBackground() {
           }
         }),
       );
-      // await new Promise((r) => setTimeout(r, 3000));
+      await new Promise((r) => setTimeout(r, 3000));
     }
   } else {
     const config = await db.config.findFirst({
