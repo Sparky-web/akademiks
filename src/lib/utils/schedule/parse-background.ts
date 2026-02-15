@@ -92,9 +92,8 @@ export default async function parseBackground() {
     const chunks = _.chunk(groups, 10);
     let i = 0;
 
-    const tokens = await rgsuGetToken();
-
     for (const chunk of chunks) {
+      const tokens = await rgsuGetToken();
       console.log(`${i++}/${chunks.length}`);
       await Promise.all(
         chunk.map(async (group) => {
