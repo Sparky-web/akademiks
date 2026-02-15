@@ -18,7 +18,7 @@ import { rgsuGetWeeklySchedule } from "./rgsu/parse-schedule";
 import { DateTime } from "luxon";
 import { LessonParsed } from "./flatten-schedule";
 import _ from "lodash";
-import { rgsuGetToken } from "./rgsu/get-token";
+import { rgsuGetToken, RgsuTokens } from "./rgsu/get-token";
 
 const scopes = [
   "https://www.googleapis.com/auth/spreadsheets",
@@ -92,8 +92,12 @@ export default async function parseBackground() {
     const chunks = _.chunk(groups, 10);
     let i = 0;
 
+    const tokens: RgsuTokens = {
+      csrfToken: "699223e7c5a3a",
+      checkToken: "987456",
+    };
+
     for (const chunk of chunks) {
-      const tokens = await rgsuGetToken();
       console.log(`${i++}/${chunks.length}`);
       await Promise.all(
         chunk.map(async (group) => {
@@ -138,7 +142,7 @@ export default async function parseBackground() {
           }
         }),
       );
-      await new Promise((r) => setTimeout(r, 3000));
+      // await new Promise((r) => setTimeout(r, 3000));
     }
   } else {
     const config = await db.config.findFirst({

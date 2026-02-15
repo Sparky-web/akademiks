@@ -28,6 +28,10 @@ export const env = createEnv({
     GOOGLE_API_EMAIL: z.string().email(),
     GOOGLE_SPREADSHEET_ID: z.string(),
     VAPID_PRIVATE_KEY: z.string(),
+    PROXY_HOST: z.string().optional(),
+    PROXY_PORT: z.string().optional(),
+    PROXY_USER: z.string().optional(),
+    PROXY_PASS: z.string().optional()
   },
 
   /**
@@ -57,7 +61,11 @@ export const env = createEnv({
     DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET,
     VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-    NEXT_PUBLIC_UNIVERSITY: process.env.NEXT_PUBLIC_UNIVERSITY
+    NEXT_PUBLIC_UNIVERSITY: process.env.NEXT_PUBLIC_UNIVERSITY,
+    PROXY_HOST: process.env.PROXY_HOST,
+    PROXY_PORT: process.env.PROXY_PORT,
+    PROXY_USER: process.env.PROXY_USER,
+    PROXY_PASS: process.env.PROXY_PASS,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

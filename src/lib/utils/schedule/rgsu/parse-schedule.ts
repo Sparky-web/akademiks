@@ -5,6 +5,9 @@ import config from "../config";
 import { LessonParsed } from "../flatten-schedule";
 import { RgsuTokens } from "./get-token";
 import FormData from "form-data";
+import { env } from "~/env";
+import { HttpsProxyAgent } from "https-proxy-agent";
+import { HttpProxyAgent } from "http-proxy-agent";
 
 const rgsuTimetable = config.timetable;
 
@@ -39,6 +42,33 @@ function getTimeSlotIndex(timeFrom: string): number {
   const slot = rgsuTimetable.find((slot) => slot.start === timeFrom);
   return slot ? slot.index : 0;
 }
+
+// Your configuration object
+const proxyConfig = env.PROXY_PORT
+  ? {
+      host: env.PROXY_HOST,
+      port: parseInt(env.PROXY_PORT),
+      auth: {
+        username: env.PROXY_USER,
+        password: env.PROXY_PASS,
+      },
+    }
+  : null;
+
+// Generate proxy URL
+const proxyUrl = proxyConfig
+  ? `http://${proxyConfig.auth.username}:${proxyConfig.auth.password}@${proxyConfig.host}:${proxyConfig.port}`
+  : null;
+
+const client = axios.create(
+  proxyUrl
+    ? {
+        httpsAgent: new HttpsProxyAgent(proxyUrl),
+        httpAgent: new HttpProxyAgent(proxyUrl),
+        proxy: false,
+      }
+    : {},
+);
 
 // Конфигурация для запросов
 const TIMETABLE_URL = "https://rgsu.net/students/schedule/";
@@ -85,6 +115,8 @@ async function getWeeklyResponse(
           "x-csrf-token": tokens.csrfToken,
           cookie: `session_captcha=${tokens.csrfToken};`,
         },
+        // httpsAgent: new HttpsProxyAgent(proxyUrl),
+        // httpAgent: new HttpProxyAgent(proxyUrl),
         withCredentials: true,
         timeout: 10000,
       },
