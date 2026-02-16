@@ -43,7 +43,7 @@ function getTimeSlotIndex(timeFrom: string): number {
   return slot ? slot.index : 0;
 }
 
-const client = axios.create(
+export const client = axios.create(
   env.PROXY_URL
     ? {
         httpsAgent: new HttpsProxyAgent(env.PROXY_URL),

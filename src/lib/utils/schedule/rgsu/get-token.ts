@@ -1,9 +1,10 @@
 import axios from "axios";
+import { client } from "./parse-schedule";
 
 export type RgsuTokens = { csrfToken: string; checkToken: string };
 
 export const rgsuGetToken = async (): Promise<RgsuTokens> => {
-  const { data } = await axios.get<string>(
+  const { data } = await client.get<string>(
     "https://rgsu.net/students/schedule/",
   );
 
