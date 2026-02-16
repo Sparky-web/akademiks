@@ -6,7 +6,7 @@ import { LessonParsed } from "../flatten-schedule";
 import { RgsuTokens } from "./get-token";
 import FormData from "form-data";
 import { env } from "~/env";
-// import { HttpsProxyAgent } from "https-proxy-agent";
+import { HttpsProxyAgent } from "https-proxy-agent";
 // import { HttpProxyAgent } from "http-proxy-agent";
 
 const rgsuTimetable = config.timetable;
@@ -43,32 +43,15 @@ function getTimeSlotIndex(timeFrom: string): number {
   return slot ? slot.index : 0;
 }
 
-// Your configuration object
-const proxyConfig = env.PROXY_PORT
-  ? {
-      host: env.PROXY_HOST,
-      port: parseInt(env.PROXY_PORT),
-      auth: {
-        username: env.PROXY_USER,
-        password: env.PROXY_PASS,
-      },
-    }
-  : null;
-
-// Generate proxy URL
-// const proxyUrl = proxyConfig
-//   ? `http://${proxyConfig.auth.username}:${proxyConfig.auth.password}@${proxyConfig.host}:${proxyConfig.port}`
-//   : null;
-
-// const client = axios.create(
-//   proxyUrl
-//     ? {
-//         httpsAgent: new HttpsProxyAgent(proxyUrl),
-//         httpAgent: new HttpProxyAgent(proxyUrl),
-//         proxy: false,
-//       }
-//     : {},
-// );
+const client = axios.create(
+  env.PROXY_URL
+    ? {
+        httpsAgent: new HttpsProxyAgent(env.PROXY_URL),
+        httpAgent: new HttpsProxyAgent(env.PROXY_URL),
+        proxy: false,
+      }
+    : {},
+);
 
 // Конфигурация для запросов
 const TIMETABLE_URL = "https://rgsu.net/students/schedule/";
@@ -106,7 +89,7 @@ async function getWeeklyResponse(
     formData.append("csrf_token", tokens.csrfToken);
     formData.append("check_token", tokens.checkToken);
 
-    const response = await axios.post<RGSUResponse>(
+    const response = await client.post<RGSUResponse>(
       `${TIMETABLE_URL}?nc_ctpl=846&date_from=${dateFrom}&date_to=${dateTo}&group=${groupId}&token=no+token`,
       formData,
       {
