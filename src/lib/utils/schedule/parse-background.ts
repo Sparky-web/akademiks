@@ -89,7 +89,7 @@ export default async function parseBackground() {
   if (env.NEXT_PUBLIC_UNIVERSITY === "RGSU") {
     const groups = await parseRgsuGroups();
 
-    const chunks = _.chunk(groups, 20);
+    const chunks = _.chunk(groups, 2);
     let i = 0;
 
     const tokens = await rgsuGetToken();
@@ -139,7 +139,7 @@ export default async function parseBackground() {
           }
         }),
       );
-      // await new Promise((r) => setTimeout(r, 3000));
+      await new Promise((r) => setTimeout(r, 500));
     }
   } else {
     const config = await db.config.findFirst({
