@@ -98,8 +98,6 @@ async function getWeeklyResponse(
           "x-csrf-token": tokens.csrfToken,
           cookie: `session_captcha=${tokens.csrfToken};`,
         },
-        // httpsAgent: new HttpsProxyAgent(proxyUrl),
-        // httpAgent: new HttpProxyAgent(proxyUrl),
         withCredentials: true,
         timeout: 10000,
       },

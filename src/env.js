@@ -59,7 +59,7 @@ export const env = createEnv({
     VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY,
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
     NEXT_PUBLIC_UNIVERSITY: process.env.NEXT_PUBLIC_UNIVERSITY,
-    PROXY_URL: process.env.URL,
+    PROXY_URL: process.env.PROXY_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
