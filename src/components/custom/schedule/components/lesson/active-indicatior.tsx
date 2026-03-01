@@ -19,11 +19,15 @@ export function formatDiff(targetDateTime) {
   if (minutes < 0) {
     return "в прошлом";
   } else if (minutes < 60) {
-    return `через ${Math.round(minutes)} ${formatNounWithNumber(Math.round(minutes), ["минута", "минуты", "минут"])}`;
+    return `через ${Math.floor(minutes)} ${formatNounWithNumber(Math.floor(minutes), ["минута", "минуты", "минут"])}`;
   } else if (hours < 24) {
-    return `через ${Math.round(hours)} ${formatNounWithNumber(Math.round(hours), ["час", "часа", "часов"])} ${Math.round(minutes % 60)} ${formatNounWithNumber(Math.round(minutes % 60), ["минута", "минуты", "минут"])}`;
+    let str = `через ${Math.floor(hours)} ${formatNounWithNumber(Math.floor(hours), ["час", "часа", "часов"])}`;
+    if (Math.floor(minutes % 60) >= 1) {
+      str += ` ${Math.floor(minutes % 60)} ${formatNounWithNumber(Math.floor(minutes % 60), ["минута", "минуты", "минут"])}`;
+    }
+    return str;
   } else {
-    return `через ${Math.round(days)} ${formatNounWithNumber(Math.round(days), ["день", "дня", "дней"])}`;
+    return `через ${Math.floor(days)} ${formatNounWithNumber(Math.floor(days), ["день", "дня", "дней"])}`;
   }
 }
 
