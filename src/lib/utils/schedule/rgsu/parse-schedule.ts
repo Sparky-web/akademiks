@@ -99,7 +99,7 @@ async function getWeeklyResponse(
           cookie: `session_captcha=${tokens.csrfToken};`,
         },
         withCredentials: true,
-        timeout: 10000,
+        timeout: 15000,
       },
     );
 
