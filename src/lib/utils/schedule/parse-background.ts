@@ -89,7 +89,7 @@ export default async function parseBackground() {
   if (env.NEXT_PUBLIC_UNIVERSITY === "RGSU") {
     const groups = await parseRgsuGroups();
 
-    const chunks = _.chunk(groups, 2);
+    const chunks = _.chunk(groups, 5);
     let i = 0;
 
     const tokens = await rgsuGetToken();
