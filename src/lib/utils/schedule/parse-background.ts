@@ -87,8 +87,8 @@ export default async function parseBackground() {
   const reports: UpdateReport[] = [];
 
   if (env.NEXT_PUBLIC_UNIVERSITY === "RGSU") {
-    // const groups = await parseRgsuGroups();
-    const groups = [{ title: "ИСТ-Б-02-Д-2025-1", id: "16982" }];
+    const groups = await parseRgsuGroups();
+    // const groups = [{ title: "ИСТ-Б-02-Д-2025-1", id: "16982" }];
 
     const chunks = _.chunk(groups, 2);
     let i = 0;

@@ -24,7 +24,7 @@ export async function updateRgsuGroupIds(): Promise<{
 }> {
   const tokens = await rgsuGetToken();
 
-  const groups = (await db.group.findMany()).slice(1130);
+  const groups = await db.group.findMany();
   let updated = 0;
   const errors: string[] = [];
 
