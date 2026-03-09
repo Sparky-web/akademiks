@@ -1,5 +1,4 @@
-import axios from "axios";
-import { client } from "./parse-schedule";
+import { client } from "./axios-client";
 
 export type RgsuTokens = { csrfToken: string; checkToken: string };
 

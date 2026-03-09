@@ -14,7 +14,7 @@ import updateSchedule, {
   UpdateReport,
 } from "~/server/api/routers/schedule/_lib/utils/update-schedule";
 import { parseRgsuGroups } from "./rgsu/parse-groups";
-import { rgsuGetWeeklySchedule } from "./rgsu/parse-schedule";
+import { rgsuGetTwoWeeklySchedule } from "./rgsu/parse-schedule";
 import { DateTime } from "luxon";
 import { LessonParsed } from "./flatten-schedule";
 import _ from "lodash";
@@ -87,7 +87,8 @@ export default async function parseBackground() {
   const reports: UpdateReport[] = [];
 
   if (env.NEXT_PUBLIC_UNIVERSITY === "RGSU") {
-    const groups = await parseRgsuGroups();
+    // const groups = await parseRgsuGroups();
+    const groups = [{ title: "ИСТ-Б-02-Д-2025-1", id: "16982" }];
 
     const chunks = _.chunk(groups, 2);
     let i = 0;
@@ -98,25 +99,19 @@ export default async function parseBackground() {
       console.log(`${i++}/${chunks.length}`);
       await Promise.all(
         chunk.map(async (group) => {
-          const weekCurrent = DateTime.now().startOf("week");
-          const weekNext = weekCurrent.plus({ week: 1 });
+          const week = DateTime.now().startOf("week");
 
-          const weeks = [weekCurrent, weekNext];
-
-          const mergedSchedule: LessonParsed[] = [];
           try {
-            for (const week of weeks) {
-              const schedule = await rgsuGetWeeklySchedule(
-                group.id,
-                group.title,
-                week,
-                tokens,
-              );
+            const schedule = await rgsuGetTwoWeeklySchedule(
+              group.id,
+              group.title,
+              week,
+              tokens,
+            );
 
-              mergedSchedule.push(...schedule);
-            }
+            if (!schedule.length) return;
 
-            const result = await updateSchedule(mergedSchedule, true);
+            const result = await updateSchedule(schedule, true);
             reports.push(result);
           } catch (err) {
             const message = `Ошибка парсинга группы: ${group.title} ${group.id}`;

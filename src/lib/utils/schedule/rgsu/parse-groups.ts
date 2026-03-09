@@ -1,6 +1,7 @@
 import axios from "axios";
 import { db } from "~/server/db";
 import { rgsuGetToken } from "./get-token";
+import { client } from "./axios-client";
 
 interface RGSUGroupData {
   id: string;
@@ -23,7 +24,7 @@ export async function updateRgsuGroupIds(): Promise<{
 }> {
   const tokens = await rgsuGetToken();
 
-  const groups = await db.group.findMany();
+  const groups = (await db.group.findMany()).slice(1130);
   let updated = 0;
   const errors: string[] = [];
 
@@ -33,7 +34,7 @@ export async function updateRgsuGroupIds(): Promise<{
     formData.append("check_token", tokens.checkToken);
 
     try {
-      const response = await axios.post<RGSUGroupsResponse>(
+      const response = await client.post<RGSUGroupsResponse>(
         `https://rgsu.net/students/schedule/?nc_ctpl=446&q=${encodeURIComponent(group.title)}&filial=&token=undefined`,
         formData,
         {
@@ -80,6 +81,12 @@ export async function updateRgsuGroupIds(): Promise<{
           );
           updated++;
         } else {
+          await db.group.delete({
+            where: {
+              id: group.id,
+            },
+          });
+
           console.log(
             `Точное совпадение не найдено для группы: ${group.title}`,
           );
@@ -92,6 +99,8 @@ export async function updateRgsuGroupIds(): Promise<{
       console.error(`Ошибка при обновлении группы ${group.title}:`, groupError);
       errors.push(`Ошибка при обновлении группы ${group.title}: ${groupError}`);
     }
+
+    // await new Promise((r) => setTimeout(r, 200));
   }
 
   return {

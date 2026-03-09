@@ -5,9 +5,7 @@ import config from "../config";
 import { LessonParsed } from "../flatten-schedule";
 import { RgsuTokens } from "./get-token";
 import FormData from "form-data";
-import { env } from "~/env";
-import { HttpsProxyAgent } from "https-proxy-agent";
-// import { HttpProxyAgent } from "http-proxy-agent";
+import { client } from "./axios-client";
 
 const rgsuTimetable = config.timetable;
 
@@ -42,16 +40,6 @@ function getTimeSlotIndex(timeFrom: string): number {
   const slot = rgsuTimetable.find((slot) => slot.start === timeFrom);
   return slot ? slot.index : 0;
 }
-
-export const client = axios.create(
-  env.PROXY_URL
-    ? {
-        httpsAgent: new HttpsProxyAgent(env.PROXY_URL),
-        httpAgent: new HttpsProxyAgent(env.PROXY_URL),
-        proxy: false,
-      }
-    : {},
-);
 
 // Конфигурация для запросов
 const TIMETABLE_URL = "https://rgsu.net/students/schedule/";
@@ -300,7 +288,7 @@ function generateEmptyWeekSchedule(
 /**
  * Получает расписание на неделю для указанной группы в виде плоского массива
  */
-export async function rgsuGetWeeklySchedule(
+export async function rgsuGetTwoWeeklySchedule(
   groupId: string,
   groupTitle: string,
   weekStart: DateTime,
@@ -319,7 +307,8 @@ export async function rgsuGetWeeklySchedule(
     }
 
     const startDateString = startDate.toISODate() || "";
-    const endDateString = startDate.plus({ days: 6 }).toISODate() || "";
+    const endDateString =
+      startDate.plus({ week: 4 }).minus({ day: 1 }).toISODate() || "";
 
     // Получаем недельное расписание одним запросом
     const data = await getWeeklyResponse(
@@ -340,7 +329,8 @@ export async function rgsuGetWeeklySchedule(
 
     // Если расписание пустое, заполняем все слоты пустыми парами
     if (Object.keys(data.data.schedule).length === 0) {
-      return generateEmptyWeekSchedule(startDate, groupTitle);
+      // return generateEmptyWeekSchedule(startDate, groupTitle);
+      [];
     }
 
     // Парсим данные недельного расписания
