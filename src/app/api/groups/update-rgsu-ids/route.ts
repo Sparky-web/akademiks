@@ -8,14 +8,15 @@ export async function GET(request: NextRequest) {
     const result = await updateRgsuGroupIds();
 
     console.log(
-      `Обновление завершено. Обновлено: ${result.updated}/${result.total}`,
+      `Обновление завершено. Обновлено: ${result.updated}/${result.total}, добавлено базовых: ${result.created}`,
     );
 
     return NextResponse.json({
       success: true,
-      message: `Обновлено ${result.updated} из ${result.total} групп`,
+      message: `Обновлено ${result.updated} из ${result.total} групп, добавлено базовых: ${result.created}`,
       data: {
         updated: result.updated,
+        created: result.created,
         total: result.total,
         errors: result.errors,
       },
