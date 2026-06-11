@@ -29,6 +29,10 @@ export const env = createEnv({
     GOOGLE_SPREADSHEET_ID: z.string(),
     VAPID_PRIVATE_KEY: z.string(),
     PROXY_URL: z.string().optional(),
+    SENTRY_URL: z.string().url().optional(),
+    SENTRY_ORG: z.string().optional(),
+    SENTRY_PROJECT: z.string().optional(),
+    SENTRY_AUTH_TOKEN: z.string().optional(),
   },
 
   /**
@@ -39,7 +43,8 @@ export const env = createEnv({
   client: {
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string(),
-    NEXT_PUBLIC_UNIVERSITY: z.literal('RGSU').optional().nullable()
+    NEXT_PUBLIC_UNIVERSITY: z.literal('RGSU').optional().nullable(),
+    NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
   },
 
   /**
@@ -60,6 +65,11 @@ export const env = createEnv({
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
     NEXT_PUBLIC_UNIVERSITY: process.env.NEXT_PUBLIC_UNIVERSITY,
     PROXY_URL: process.env.PROXY_URL,
+    SENTRY_URL: process.env.SENTRY_URL,
+    SENTRY_ORG: process.env.SENTRY_ORG,
+    SENTRY_PROJECT: process.env.SENTRY_PROJECT,
+    SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

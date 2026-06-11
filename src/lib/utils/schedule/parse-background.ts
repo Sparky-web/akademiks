@@ -90,7 +90,7 @@ export default async function parseBackground() {
     const groups = await parseRgsuGroups();
     // const groups = [{ title: "ИСТ-Б-02-Д-2025-1", id: "16982" }];
 
-    const chunks = _.chunk(groups, 4);
+    const chunks = _.chunk(groups, 10);
     let i = 0;
 
     const tokens = await rgsuGetToken();
