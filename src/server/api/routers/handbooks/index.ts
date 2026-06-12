@@ -77,25 +77,29 @@ export default createTRPCRouter({
         }),
     getTeachers: protectedProcedure
         .input(z.object({
-            lessonTitle: z.string().optional(),
+            lessonTitle: z.string().nullish(),
         }))
         .query(async ({ ctx, input }) => {
             if (!ctx.session?.user?.isAdmin) throw new Error('Доступ запрещен')
 
-            const teachers = await ctx.db.teacher.findMany({
-                orderBy: {
-                    name: 'asc'
-                },
-                where: {
-                    Lesson: {
-                        some: {
-                            title: {
-                                contains: input.lessonTitle
-                            }
-                        }
+            const lessonTitle = input.lessonTitle?.trim() || undefined
+
+            const teachers = lessonTitle
+                ? await ctx.db.teacher.findMany({
+                    orderBy: {
+                        name: 'asc'
                     },
-                }
-            })
+                    where: {
+                        Lesson: {
+                            some: {
+                                title: {
+                                    contains: lessonTitle
+                                }
+                            }
+                        },
+                    }
+                })
+                : []
 
             let allTeachers = await ctx.db.teacher.findMany({
                 orderBy: {
@@ -108,7 +112,7 @@ export default createTRPCRouter({
 
             return [
                 ...(teachers?.length ? [{
-                    label: 'Преподаватели с предметом ' + input.lessonTitle,
+                    label: 'Преподаватели с предметом ' + lessonTitle,
                     values: teachers.map(e => ({
                         label: e.name,
                         value: e.id
