@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { normalizeSentryEvent } from "~/lib/utils/sentry/normalize-event";
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -16,7 +17,7 @@ Sentry.init({
     // их текст уникален для каждого вызова и не группируется. Признак — CSS-директива %c.
     const text = event.message ?? event.logentry?.message ?? "";
     if (typeof text === "string" && text.includes("%c")) return null;
-    return event;
+    return normalizeSentryEvent(event);
   },
 });
 

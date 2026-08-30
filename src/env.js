@@ -20,7 +20,7 @@ export const env = createEnv({
       // Since NextAuth.js automatically uses the VERCEL_URL if present.
       (str) => process.env.VERCEL_URL ?? str,
       // VERCEL_URL doesn't include `https` so it cant be validated as a URL
-      process.env.VERCEL ? z.string() : z.string().url()
+      process.env.VERCEL ? z.string() : z.string().url(),
     ),
     DISCORD_CLIENT_ID: z.string(),
     DISCORD_CLIENT_SECRET: z.string(),
@@ -29,6 +29,10 @@ export const env = createEnv({
     GOOGLE_SPREADSHEET_ID: z.string(),
     VAPID_PRIVATE_KEY: z.string(),
     PROXY_URL: z.string().optional(),
+    PX6_API_KEY: z.string().optional(),
+    RGSU_PROXY_ROTATION_TELEGRAM_BOT_TOKEN: z.string().optional(),
+    RGSU_PROXY_ROTATION_TELEGRAM_CHAT_ID: z.string().optional(),
+    CRON_SECRET: z.string().min(32).optional(),
     SENTRY_URL: z.string().url().optional(),
     SENTRY_ORG: z.string().optional(),
     SENTRY_PROJECT: z.string().optional(),
@@ -43,7 +47,7 @@ export const env = createEnv({
   client: {
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string(),
-    NEXT_PUBLIC_UNIVERSITY: z.literal('RGSU').optional().nullable(),
+    NEXT_PUBLIC_UNIVERSITY: z.literal("RGSU").optional().nullable(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().url().optional(),
   },
 
@@ -65,6 +69,12 @@ export const env = createEnv({
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
     NEXT_PUBLIC_UNIVERSITY: process.env.NEXT_PUBLIC_UNIVERSITY,
     PROXY_URL: process.env.PROXY_URL,
+    PX6_API_KEY: process.env.PX6_API_KEY,
+    RGSU_PROXY_ROTATION_TELEGRAM_BOT_TOKEN:
+      process.env.RGSU_PROXY_ROTATION_TELEGRAM_BOT_TOKEN,
+    RGSU_PROXY_ROTATION_TELEGRAM_CHAT_ID:
+      process.env.RGSU_PROXY_ROTATION_TELEGRAM_CHAT_ID,
+    CRON_SECRET: process.env.CRON_SECRET,
     SENTRY_URL: process.env.SENTRY_URL,
     SENTRY_ORG: process.env.SENTRY_ORG,
     SENTRY_PROJECT: process.env.SENTRY_PROJECT,

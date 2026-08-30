@@ -2,6 +2,8 @@ import { db } from "~/server/db";
 import translit from "~/lib/utils/translit";
 import { rgsuGetToken, type RgsuTokens } from "./get-token";
 import { client } from "./axios-client";
+import { RgsuBotBlockedError, isRgsuBotBlockedError } from "./errors";
+import { ensureRgsuProxy, rotateRgsuProxyAfterBlock } from "./proxy-manager";
 
 interface RGSUGroupData {
   id: string;
@@ -10,6 +12,7 @@ interface RGSUGroupData {
 
 interface RGSUGroupsResponse {
   success: boolean;
+  message?: string;
   data: RGSUGroupData[];
 }
 
@@ -57,7 +60,31 @@ async function fetchRgsuGroupsByQueryWithTokens(
   if (response.data.success && Array.isArray(response.data.data)) {
     return response.data.data;
   }
-  return [];
+  if (response.data.message?.includes("Возможно вы бот")) {
+    throw new RgsuBotBlockedError();
+  }
+  throw new Error("РГСУ не вернул список групп");
+}
+
+async function fetchRgsuGroupsWithRecovery(
+  query: string,
+  tokens: RgsuTokens,
+): Promise<{ data: RGSUGroupData[]; tokens: RgsuTokens }> {
+  try {
+    return {
+      data: await fetchRgsuGroupsByQueryWithTokens(query, tokens),
+      tokens,
+    };
+  } catch (error) {
+    if (!isRgsuBotBlockedError(error)) throw error;
+
+    await rotateRgsuProxyAfterBlock();
+    const refreshedTokens = await rgsuGetToken();
+    return {
+      data: await fetchRgsuGroupsByQueryWithTokens(query, refreshedTokens),
+      tokens: refreshedTokens,
+    };
+  }
 }
 
 /**
@@ -67,8 +94,9 @@ async function fetchRgsuGroupsByQueryWithTokens(
 export async function fetchRgsuGroupsByQuery(
   text: string,
 ): Promise<{ id: string; name: string }[]> {
+  await ensureRgsuProxy();
   const tokens = await rgsuGetToken();
-  return fetchRgsuGroupsByQueryWithTokens(text, tokens);
+  return (await fetchRgsuGroupsWithRecovery(text, tokens)).data;
 }
 
 /** Базовое имя без суффикса -N / -NN (подгруппа), нап. ИСТ-Б-02-Д-2025-1 → ИСТ-Б-02-Д-2025 */
@@ -88,7 +116,8 @@ export async function updateRgsuGroupIds(): Promise<{
   total: number;
   errors: string[];
 }> {
-  const tokens = await rgsuGetToken();
+  await ensureRgsuProxy();
+  let tokens = await rgsuGetToken();
 
   const groups = await db.group.findMany();
   let updated = 0;
@@ -97,7 +126,9 @@ export async function updateRgsuGroupIds(): Promise<{
 
   for (const group of groups) {
     try {
-      const data = await fetchRgsuGroupsByQueryWithTokens(group.title, tokens);
+      const response = await fetchRgsuGroupsWithRecovery(group.title, tokens);
+      const data = response.data;
+      tokens = response.tokens;
 
       const exactMatch = data.find((item) => item.name === group.title);
 
@@ -112,16 +143,11 @@ export async function updateRgsuGroupIds(): Promise<{
         );
         updated++;
       } else {
-        await db.group.delete({
-          where: {
-            id: group.id,
-          },
-        });
-
         console.log(`Точное совпадение не найдено для группы: ${group.title}`);
         errors.push(`Точное совпадение не найдено для группы: ${group.title}`);
       }
     } catch (groupError) {
+      if (isRgsuBotBlockedError(groupError)) throw groupError;
       console.error(`Ошибка при обновлении группы ${group.title}:`, groupError);
       errors.push(`Ошибка при обновлении группы ${group.title}: ${groupError}`);
     }
@@ -136,7 +162,9 @@ export async function updateRgsuGroupIds(): Promise<{
 
   for (const baseTitle of baseTitles) {
     try {
-      const data = await fetchRgsuGroupsByQueryWithTokens(baseTitle, tokens);
+      const response = await fetchRgsuGroupsWithRecovery(baseTitle, tokens);
+      const data = response.data;
+      tokens = response.tokens;
 
       if (data.length === 0) {
         errors.push(
@@ -162,6 +190,7 @@ export async function updateRgsuGroupIds(): Promise<{
         console.log(`Добавлена группа ${item.name}, additionalId: ${item.id}`);
       }
     } catch (e) {
+      if (isRgsuBotBlockedError(e)) throw e;
       console.error(
         `Ошибка при досинхронизации групп по префиксу ${baseTitle}:`,
         e,

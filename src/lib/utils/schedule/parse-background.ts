@@ -19,6 +19,11 @@ import { DateTime } from "luxon";
 import { LessonParsed } from "./flatten-schedule";
 import _ from "lodash";
 import { rgsuGetToken, RgsuTokens } from "./rgsu/get-token";
+import { isRgsuBotBlockedError } from "./rgsu/errors";
+import {
+  ensureRgsuProxy,
+  rotateRgsuProxyAfterBlock,
+} from "./rgsu/proxy-manager";
 
 const scopes = [
   "https://www.googleapis.com/auth/spreadsheets",
@@ -87,6 +92,7 @@ export default async function parseBackground() {
   const reports: UpdateReport[] = [];
 
   if (env.NEXT_PUBLIC_UNIVERSITY === "RGSU") {
+    await ensureRgsuProxy();
     const groups = await parseRgsuGroups();
     // const groups = [{ title: "ИСТ-Б-02-Д-2025-1", id: "16982" }];
 
@@ -102,27 +108,44 @@ export default async function parseBackground() {
           const week = DateTime.now().startOf("week");
 
           try {
-            const schedule = await rgsuGetTwoWeeklySchedule(
-              group.id,
-              group.title,
-              week,
-              tokens,
-            );
+            let schedule: LessonParsed[];
+            try {
+              schedule = await rgsuGetTwoWeeklySchedule(
+                group.id,
+                group.title,
+                week,
+                tokens,
+              );
+            } catch (error) {
+              if (!isRgsuBotBlockedError(error)) throw error;
+
+              await rotateRgsuProxyAfterBlock();
+              const refreshedTokens = await rgsuGetToken();
+              schedule = await rgsuGetTwoWeeklySchedule(
+                group.id,
+                group.title,
+                week,
+                refreshedTokens,
+              );
+            }
 
             if (!schedule.length) return;
 
             const result = await updateSchedule(schedule, true);
             reports.push(result);
           } catch (err) {
+            if (isRgsuBotBlockedError(err)) throw err;
             const message = `Ошибка парсинга группы: ${group.title} ${group.id}`;
-            console.error(message, err);
+            const errorMessage =
+              err instanceof Error ? err.message : String(err);
+            console.error(message, errorMessage);
             reports.push({
-              error: `${message} ${err}`,
+              error: `${message} ${errorMessage}`,
               summary: {
                 added: 0,
                 updated: 0,
                 deleted: 0,
-                errors: 0,
+                errors: 1,
                 notificationsSent: 0,
                 notificationsError: 0,
                 groupsAffected: [],

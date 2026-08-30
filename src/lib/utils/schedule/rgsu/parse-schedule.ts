@@ -6,6 +6,7 @@ import { LessonParsed } from "../flatten-schedule";
 import { RgsuTokens } from "./get-token";
 import FormData from "form-data";
 import { client } from "./axios-client";
+import { RgsuBotBlockedError } from "./errors";
 
 const rgsuTimetable = config.timetable;
 
@@ -27,7 +28,8 @@ interface RGSUWeeklySchedule {
 
 export interface RGSUResponse {
   success: boolean;
-  data: {
+  message?: string;
+  data?: {
     groupName: string;
     schedule: RGSUWeeklySchedule;
   };
@@ -319,10 +321,13 @@ export async function rgsuGetTwoWeeklySchedule(
     );
 
     if (!data.success) {
+      if (data.message?.includes("Возможно вы бот")) {
+        throw new RgsuBotBlockedError();
+      }
       throw new Error(JSON.stringify(data));
     }
 
-    if (!data.success || !data.data.schedule) {
+    if (!data.data?.schedule) {
       // Если данные пустые, возвращаем пустой массив
       return [];
     }
@@ -336,7 +341,8 @@ export async function rgsuGetTwoWeeklySchedule(
     // Парсим данные недельного расписания
     return parseWeeklyTimetable(data.data.schedule, groupTitle);
   } catch (error) {
-    console.error("Ошибка при получении недельного расписания:", error);
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Ошибка при получении недельного расписания:", message);
     throw error;
   }
 }

@@ -1,11 +1,31 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { isCronAuthorized } from "~/lib/utils/cron-auth";
 import { updateRgsuGroupIds } from "~/lib/utils/schedule/rgsu/parse-groups";
 
-export async function GET(request: NextRequest) {
+export const maxDuration = 1800;
+
+let activeGroupUpdate: ReturnType<typeof updateRgsuGroupIds> | null = null;
+
+export async function GET(request: Request) {
+  if (!isCronAuthorized(request)) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
+  }
+
+  if (activeGroupUpdate) {
+    return NextResponse.json(
+      { success: false, error: "Группы уже обновляются" },
+      { status: 409 },
+    );
+  }
+
   try {
     console.log("Начинаем обновление ID групп RGSU...");
 
-    const result = await updateRgsuGroupIds();
+    activeGroupUpdate = updateRgsuGroupIds();
+    const result = await activeGroupUpdate;
 
     console.log(
       `Обновление завершено. Обновлено: ${result.updated}/${result.total}, добавлено базовых: ${result.created}`,
@@ -32,5 +52,7 @@ export async function GET(request: NextRequest) {
       },
       { status: 500 },
     );
+  } finally {
+    activeGroupUpdate = null;
   }
 }

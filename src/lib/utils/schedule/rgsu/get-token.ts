@@ -5,6 +5,7 @@ export type RgsuTokens = { csrfToken: string; checkToken: string };
 export const rgsuGetToken = async (): Promise<RgsuTokens> => {
   const { data } = await client.get<string>(
     "https://rgsu.net/students/schedule/",
+    { signal: AbortSignal.timeout(20000) },
   );
 
   return extractTokens(data);

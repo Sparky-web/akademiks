@@ -1,69 +1,55 @@
 import axios from "axios";
-import tunnel from "tunnel";
 import { env } from "~/env";
 import axiosRetry from "axios-retry";
+import { HttpsProxyAgent } from "https-proxy-agent";
+import { SocksProxyAgent } from "socks-proxy-agent";
 
-interface ProxyConfig {
-  host: string;
-  port: number;
-  proxyAuth: string;
-}
-
-const parseProxyUrl = (): ProxyConfig | null => {
-  const proxyUrl = env.PROXY_URL;
-
+const createProxyAgent = (
+  proxyUrl: string | undefined,
+): HttpsProxyAgent<string> | SocksProxyAgent | null => {
   if (!proxyUrl || typeof proxyUrl !== "string") {
     return null;
   }
 
-  // Regular expression to match proxy URL pattern
-  // Format: (http://)username:password@host:port
-  const proxyPattern = /^(?:https?:\/\/)?([^:]+):([^@]+)@([^:]+):(\d+)$/;
+  const normalizedUrl = /^[a-z][a-z\d+.-]*:\/\//i.test(proxyUrl)
+    ? proxyUrl
+    : `http://${proxyUrl}`;
+  const protocol = new URL(normalizedUrl).protocol;
 
-  const matches = proxyUrl.match(proxyPattern);
-
-  if (!matches) {
-    return null;
+  if (protocol === "socks:" || protocol === "socks5:") {
+    return new SocksProxyAgent(normalizedUrl, { keepAlive: true });
   }
 
-  const [, username, password, host, portStr] = matches;
-
-  if (!portStr) return null;
-
-  const port = parseInt(portStr, 10);
-
-  // Validate extracted values
-  if (
-    !username ||
-    !password ||
-    !host ||
-    !port ||
-    isNaN(port) ||
-    port <= 0 ||
-    port > 65535
-  ) {
-    return null;
-  }
-
-  return {
-    host,
-    port,
-    proxyAuth: `${username}:${password}`,
-  };
+  return new HttpsProxyAgent(normalizedUrl, { keepAlive: true });
 };
 
-const proxy = parseProxyUrl();
+let activeProxyUrl = env.PROXY_URL;
+const proxyAgent = createProxyAgent(activeProxyUrl);
 
 export const client = axios.create(
-  proxy
+  proxyAgent
     ? {
-        httpsAgent: tunnel.httpsOverHttp({
-          proxy,
-        }),
+        httpsAgent: proxyAgent,
         proxy: false,
+        timeout: 30000,
+        headers: {
+          "Accept-Encoding": "identity",
+        },
       }
     : {},
 );
+
+export const setRgsuProxyUrl = (proxyUrl: string): boolean => {
+  if (proxyUrl === activeProxyUrl) return false;
+
+  const agent = createProxyAgent(proxyUrl);
+  if (!agent) throw new Error("Не удалось настроить прокси РГСУ");
+
+  activeProxyUrl = proxyUrl;
+  client.defaults.httpsAgent = agent;
+  client.defaults.proxy = false;
+  return true;
+};
 
 axiosRetry(client, {
   retries: 3,
@@ -77,4 +63,9 @@ axiosRetry(client, {
     );
   },
   shouldResetTimeout: true, // reset timeout between retries
+  onRetry: (_retryCount, _error, requestConfig) => {
+    if (requestConfig.signal) {
+      requestConfig.signal = AbortSignal.timeout(20000);
+    }
+  },
 });
