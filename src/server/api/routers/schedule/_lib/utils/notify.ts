@@ -62,13 +62,14 @@ export default async function notify(teachers: string[], groups: string[]) {
                 status: 'success',
             })
         } catch (e) {
-            console.error('Ошибка отправки уведомления пользователю: ' + user.email + ' - ' + e.message)
+            const errorMessage = e instanceof Error ? e.message : String(e)
+            console.error('Ошибка отправки push-уведомления: ' + errorMessage)
             reportReuslt.push({
                 type: user.role === 1 ? 'group' : 'teacher',
                 email: user.email,
                 teacher: user.Teacher?.name,
                 status: 'error',
-                error: e?.message
+                error: errorMessage
             })
         }
     }

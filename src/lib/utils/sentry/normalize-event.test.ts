@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   normalizeChunkLoadError,
+  normalizePushNotificationError,
   normalizeSentryEvent,
 } from "./normalize-event";
 
@@ -38,4 +39,31 @@ test("normalizes all grouping fields", () => {
   assert.equal(event.logentry?.message, "Failed to load chunk");
   assert.equal(event.exception?.values?.[0]?.value, "Failed to load chunk");
   assert.deepEqual(event.fingerprint, ["nextjs-chunk-load-error"]);
+});
+
+test("removes the email from a legacy push notification error", () => {
+  assert.equal(
+    normalizePushNotificationError(
+      "Ошибка отправки уведомления пользователю: user@example.com - Не удалось отправить push-уведомления на все подписки",
+    ),
+    "Ошибка отправки push-уведомления: Не удалось отправить push-уведомления на все подписки",
+  );
+});
+
+test("groups push notification errors without a Sentry user", () => {
+  const event = normalizeSentryEvent({
+    message:
+      "Ошибка отправки push-уведомления: Не удалось отправить push-уведомления на все подписки",
+    user: {
+      id: "user-id",
+      email: "user@example.com",
+    },
+  });
+
+  assert.equal(
+    event.message,
+    "Ошибка отправки push-уведомления: Не удалось отправить push-уведомления на все подписки",
+  );
+  assert.equal(event.user, undefined);
+  assert.deepEqual(event.fingerprint, ["push-notification-send-error"]);
 });
