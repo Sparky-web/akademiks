@@ -13,13 +13,13 @@ const MIN_PROXY_VALIDITY_MS = 30 * 60 * 1000;
 
 interface Px6Proxy {
   id: string;
-  version: string;
+  version?: string;
   host: string;
   port: string;
   user: string;
   pass: string;
   type: "auto" | "http" | "socks";
-  country: string;
+  country?: string;
   descr?: string;
   active: string;
   unixtime: number | string;
@@ -178,9 +178,21 @@ const buyProxy = async (reason: string): Promise<RgsuProxyResult> => {
   });
   const proxy = Object.values(response.list ?? {})[0];
 
-  if (!proxy || proxy.version !== "4" || proxy.country !== "ru") {
+  if (
+    !proxy?.id ||
+    !proxy.host ||
+    !proxy.port ||
+    !proxy.user ||
+    !proxy.pass ||
+    !proxy.unixtime ||
+    !proxy.unixtime_end
+  ) {
     throw new Error("PX6 вернул некорректный IPv4-прокси");
   }
+
+  proxy.version = "4";
+  proxy.country = "ru";
+  proxy.descr = PENDING_NOTIFICATION_DESCRIPTION;
 
   const proxyChanged = configureProxy(proxy);
   await sendRotationNotification(reason, proxy);
