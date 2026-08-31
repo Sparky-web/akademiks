@@ -17,8 +17,7 @@ import { parseRgsuGroups } from "./rgsu/parse-groups";
 import { rgsuGetTwoWeeklySchedule } from "./rgsu/parse-schedule";
 import { DateTime } from "luxon";
 import { LessonParsed } from "./flatten-schedule";
-import _ from "lodash";
-import { rgsuGetToken, RgsuTokens } from "./rgsu/get-token";
+import { rgsuGetToken } from "./rgsu/get-token";
 import { isRgsuBotBlockedError } from "./rgsu/errors";
 import {
   ensureRgsuProxy,
@@ -96,67 +95,61 @@ export default async function parseBackground() {
     const groups = await parseRgsuGroups();
     // const groups = [{ title: "ИСТ-Б-02-Д-2025-1", id: "16982" }];
 
-    const chunks = _.chunk(groups, 10);
     let i = 0;
 
     const tokens = await rgsuGetToken();
 
-    for (const chunk of chunks) {
-      console.log(`${i++}/${chunks.length}`);
-      await Promise.all(
-        chunk.map(async (group) => {
-          const week = DateTime.now().startOf("week");
+    for (const group of groups) {
+      console.log(`${++i}/${groups.length}`);
+      const week = DateTime.now().startOf("week");
 
-          try {
-            let schedule: LessonParsed[];
-            try {
-              schedule = await rgsuGetTwoWeeklySchedule(
-                group.id,
-                group.title,
-                week,
-                tokens,
-              );
-            } catch (error) {
-              if (!isRgsuBotBlockedError(error)) throw error;
+      try {
+        let schedule: LessonParsed[];
+        try {
+          schedule = await rgsuGetTwoWeeklySchedule(
+            group.id,
+            group.title,
+            week,
+            tokens,
+          );
+        } catch (error) {
+          if (!isRgsuBotBlockedError(error)) throw error;
 
-              await rotateRgsuProxyAfterBlock();
-              const refreshedTokens = await rgsuGetToken();
-              schedule = await rgsuGetTwoWeeklySchedule(
-                group.id,
-                group.title,
-                week,
-                refreshedTokens,
-              );
-            }
+          await rotateRgsuProxyAfterBlock();
+          const refreshedTokens = await rgsuGetToken();
+          schedule = await rgsuGetTwoWeeklySchedule(
+            group.id,
+            group.title,
+            week,
+            refreshedTokens,
+          );
+        }
 
-            if (!schedule.length) return;
+        if (!schedule.length) continue;
 
-            const result = await updateSchedule(schedule, true);
-            reports.push(result);
-          } catch (err) {
-            if (isRgsuBotBlockedError(err)) throw err;
-            const message = `Ошибка парсинга группы: ${group.title} ${group.id}`;
-            const errorMessage =
-              err instanceof Error ? err.message : String(err);
-            console.error(message, errorMessage);
-            reports.push({
-              error: `${message} ${errorMessage}`,
-              summary: {
-                added: 0,
-                updated: 0,
-                deleted: 0,
-                errors: 1,
-                notificationsSent: 0,
-                notificationsError: 0,
-                groupsAffected: [],
-                teachersAffected: [],
-              },
-              result: [],
-              notificationResult: [],
-            });
-          }
-        }),
-      );
+        const result = await updateSchedule(schedule, true);
+        reports.push(result);
+      } catch (err) {
+        if (isRgsuBotBlockedError(err)) throw err;
+        const message = `Ошибка парсинга группы: ${group.title} ${group.id}`;
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        console.error(message, errorMessage);
+        reports.push({
+          error: `${message} ${errorMessage}`,
+          summary: {
+            added: 0,
+            updated: 0,
+            deleted: 0,
+            errors: 1,
+            notificationsSent: 0,
+            notificationsError: 0,
+            groupsAffected: [],
+            teachersAffected: [],
+          },
+          result: [],
+          notificationResult: [],
+        });
+      }
     }
   } else {
     const config = await db.config.findFirst({

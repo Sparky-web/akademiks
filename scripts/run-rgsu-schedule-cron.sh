@@ -11,7 +11,7 @@ set +a
 cron_secret="${CRON_SECRET:-${NEXTAUTH_SECRET:-}}"
 : "${cron_secret:?CRON_SECRET or NEXTAUTH_SECRET is required}"
 
-curl --fail-with-body --silent --show-error --max-time 1800 \
+curl --fail-with-body --silent --show-error --max-time 7200 \
   --header "Authorization: Bearer ${cron_secret}" \
   "http://127.0.0.1:3002/api/schedule" \
   | logger --tag akademiks-rgsu-schedule

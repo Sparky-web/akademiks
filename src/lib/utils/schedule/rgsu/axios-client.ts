@@ -4,6 +4,10 @@ import axiosRetry from "axios-retry";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { SocksProxyAgent } from "socks-proxy-agent";
 
+import { createRequestThrottle } from "./request-throttle";
+
+const RGSU_REQUEST_INTERVAL_MS = 1000;
+
 const createProxyAgent = (
   proxyUrl: string | undefined,
 ): HttpsProxyAgent<string> | SocksProxyAgent | null => {
@@ -38,6 +42,13 @@ export const client = axios.create(
       }
     : {},
 );
+
+const waitForRequestSlot = createRequestThrottle(RGSU_REQUEST_INTERVAL_MS);
+
+client.interceptors.request.use(async (config) => {
+  await waitForRequestSlot();
+  return config;
+});
 
 export const setRgsuProxyUrl = (proxyUrl: string): boolean => {
   if (proxyUrl === activeProxyUrl) return false;
