@@ -3,6 +3,7 @@ import axios from "axios";
 import { env } from "~/env";
 
 import { setRgsuProxyUrl } from "./axios-client";
+import { sendRgsuTelegramMessage } from "./telegram";
 
 const PX6_API_URL = "https://px6.link/api";
 const PROXY_DESCRIPTION = "akademiks-rgsu";
@@ -118,40 +119,17 @@ const sendRotationNotification = async (
   reason: string,
   proxy: Px6Proxy,
 ): Promise<void> => {
-  const token = env.RGSU_PROXY_ROTATION_TELEGRAM_BOT_TOKEN;
-  const chatId = env.RGSU_PROXY_ROTATION_TELEGRAM_CHAT_ID;
-  if (!token || !chatId) {
-    throw new Error("Telegram для уведомления о прокси не настроен");
-  }
-
   const expiresAt = new Date(getTimestamp(proxy.unixtime_end));
   const expiresText = expiresAt.toLocaleString("ru-RU", {
     timeZone: "Europe/Moscow",
   });
-  const url = `https://api-telegram.studentto.ru/bot${token}/sendMessage`;
-
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      await axios.post(
-        url,
-        {
-          chat_id: chatId,
-          text: [
-            "🔄 Академикс РГСУ: прокси заменён.",
-            `Причина: ${reason}.`,
-            `Действует до: ${expiresText} МСК.`,
-          ].join("\n"),
-        },
-        { timeout: 15000 },
-      );
-      return;
-    } catch {
-      if (attempt === 3) {
-        throw new Error("Не удалось отправить уведомление о ротации прокси");
-      }
-      await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
-    }
-  }
+  await sendRgsuTelegramMessage(
+    [
+      "🔄 Академикс РГСУ: прокси заменён.",
+      `Причина: ${reason}.`,
+      `Действует до: ${expiresText} МСК.`,
+    ].join("\n"),
+  );
 };
 
 const markNotificationSent = async (proxy: Px6Proxy): Promise<void> => {

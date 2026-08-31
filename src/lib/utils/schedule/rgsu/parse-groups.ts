@@ -4,10 +4,17 @@ import { rgsuGetToken, type RgsuTokens } from "./get-token";
 import { client } from "./axios-client";
 import { RgsuBotBlockedError, isRgsuBotBlockedError } from "./errors";
 import { ensureRgsuProxy, rotateRgsuProxyAfterBlock } from "./proxy-manager";
+import { sendRgsuTelegramMessage } from "./telegram";
 
 interface RGSUGroupData {
   id: string;
   name: string;
+}
+
+export interface DeletedRgsuGroupResult {
+  usersDetached: number;
+  lessonsDeleted: number;
+  favouritesDeleted: number;
 }
 
 interface RGSUGroupsResponse {
@@ -99,6 +106,69 @@ export async function fetchRgsuGroupsByQuery(
   return (await fetchRgsuGroupsWithRecovery(text, tokens)).data;
 }
 
+export function findExactRgsuGroup(
+  groups: RGSUGroupData[],
+  title: string,
+): RGSUGroupData | undefined {
+  return groups.find((item) => item.name === title);
+}
+
+export async function refreshRgsuGroupAdditionalId(group: {
+  id: string;
+  title: string;
+}): Promise<string | null> {
+  const matches = await fetchRgsuGroupsByQuery(group.title);
+  const exactMatch = findExactRgsuGroup(matches, group.title);
+  if (!exactMatch) return null;
+
+  await db.group.update({
+    where: { id: group.id },
+    data: { additionalId: exactMatch.id },
+  });
+
+  return exactMatch.id;
+}
+
+export async function deleteMissingRgsuGroup(group: {
+  id: string;
+  title: string;
+  additionalId: string;
+}): Promise<DeletedRgsuGroupResult> {
+  const result = await db.$transaction(async (tx) => {
+    const users = await tx.user.updateMany({
+      where: { groupId: group.id },
+      data: { groupId: null },
+    });
+    const lessons = await tx.lesson.deleteMany({
+      where: { groupId: group.id },
+    });
+    const favourites = await tx.favourite.deleteMany({
+      where: { groupId: group.id },
+    });
+    await tx.group.delete({ where: { id: group.id } });
+
+    return {
+      usersDetached: users.count,
+      lessonsDeleted: lessons.count,
+      favouritesDeleted: favourites.count,
+    };
+  });
+
+  await sendRgsuTelegramMessage(
+    [
+      "🗑 Академикс РГСУ: группа удалена.",
+      `Группа: ${group.title}.`,
+      `Старый GUID: ${group.additionalId}.`,
+      "Причина: РГСУ не нашёл GUID. Поиск по названию тоже не нашёл группу.",
+      `Отвязано пользователей: ${result.usersDetached}.`,
+      `Удалено занятий: ${result.lessonsDeleted}.`,
+      `Удалено избранных: ${result.favouritesDeleted}.`,
+    ].join("\n"),
+  );
+
+  return result;
+}
+
 /** Базовое имя без суффикса -N / -NN (подгруппа), нап. ИСТ-Б-02-Д-2025-1 → ИСТ-Б-02-Д-2025 */
 function stripTrailingSubgroupSuffix(title: string): string | null {
   const m = title.match(/^(.+)-(\d{1,2})$/);
@@ -130,7 +200,7 @@ export async function updateRgsuGroupIds(): Promise<{
       const data = response.data;
       tokens = response.tokens;
 
-      const exactMatch = data.find((item) => item.name === group.title);
+      const exactMatch = findExactRgsuGroup(data, group.title);
 
       if (exactMatch) {
         await db.group.update({
@@ -214,7 +284,7 @@ export async function updateRgsuGroupIds(): Promise<{
  * @returns Promise<string[]> - массив строк с названиями всех групп
  */
 export async function parseRgsuGroups(): Promise<
-  { id: string; title: string }[]
+  { id: string; databaseId: string; title: string }[]
 > {
   try {
     const groups = await db.group.findMany({
@@ -222,7 +292,11 @@ export async function parseRgsuGroups(): Promise<
     });
     return groups
       .filter((group) => group.additionalId)
-      .map((group) => ({ id: group.additionalId!, title: group.title }));
+      .map((group) => ({
+        id: group.additionalId!,
+        databaseId: group.id,
+        title: group.title,
+      }));
   } catch (error) {
     console.error("Ошибка при парсинге групп из RGSU:", error);
     throw new Error("Неизвестная ошибка при парсинге групп");

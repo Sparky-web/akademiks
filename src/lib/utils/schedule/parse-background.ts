@@ -13,12 +13,19 @@ import updateSchedule, {
   ResultItem,
   UpdateReport,
 } from "~/server/api/routers/schedule/_lib/utils/update-schedule";
-import { parseRgsuGroups } from "./rgsu/parse-groups";
+import {
+  deleteMissingRgsuGroup,
+  parseRgsuGroups,
+  refreshRgsuGroupAdditionalId,
+} from "./rgsu/parse-groups";
 import { rgsuGetTwoWeeklySchedule } from "./rgsu/parse-schedule";
 import { DateTime } from "luxon";
 import { LessonParsed } from "./flatten-schedule";
 import { rgsuGetToken } from "./rgsu/get-token";
-import { isRgsuBotBlockedError } from "./rgsu/errors";
+import {
+  isRgsuBotBlockedError,
+  isRgsuGroupGuidNotFoundError,
+} from "./rgsu/errors";
 import {
   ensureRgsuProxy,
   rotateRgsuProxyAfterBlock,
@@ -28,6 +35,23 @@ const scopes = [
   "https://www.googleapis.com/auth/spreadsheets",
   "https://www.googleapis.com/auth/drive",
 ];
+
+async function getRgsuScheduleWithProxyRecovery(
+  groupId: string,
+  groupTitle: string,
+  week: DateTime,
+  tokens: Awaited<ReturnType<typeof rgsuGetToken>>,
+): Promise<LessonParsed[]> {
+  try {
+    return await rgsuGetTwoWeeklySchedule(groupId, groupTitle, week, tokens);
+  } catch (error) {
+    if (!isRgsuBotBlockedError(error)) throw error;
+
+    await rotateRgsuProxyAfterBlock();
+    const refreshedTokens = await rgsuGetToken();
+    return rgsuGetTwoWeeklySchedule(groupId, groupTitle, week, refreshedTokens);
+  }
+}
 
 async function authorize() {
   const client_email = env.GOOGLE_API_EMAIL;
@@ -106,22 +130,40 @@ export default async function parseBackground() {
       try {
         let schedule: LessonParsed[];
         try {
-          schedule = await rgsuGetTwoWeeklySchedule(
+          schedule = await getRgsuScheduleWithProxyRecovery(
             group.id,
             group.title,
             week,
             tokens,
           );
         } catch (error) {
-          if (!isRgsuBotBlockedError(error)) throw error;
+          if (!isRgsuGroupGuidNotFoundError(error)) throw error;
 
-          await rotateRgsuProxyAfterBlock();
-          const refreshedTokens = await rgsuGetToken();
-          schedule = await rgsuGetTwoWeeklySchedule(
-            group.id,
+          const refreshedGroupId = await refreshRgsuGroupAdditionalId({
+            id: group.databaseId,
+            title: group.title,
+          });
+
+          if (!refreshedGroupId) {
+            const deletion = await deleteMissingRgsuGroup({
+              id: group.databaseId,
+              title: group.title,
+              additionalId: group.id,
+            });
+            console.warn(
+              `Группа ${group.title} удалена: отвязано пользователей ${deletion.usersDetached}, удалено занятий ${deletion.lessonsDeleted}, удалено избранных ${deletion.favouritesDeleted}`,
+            );
+            continue;
+          }
+
+          console.log(
+            `GUID группы ${group.title} обновлён: ${group.id} → ${refreshedGroupId}`,
+          );
+          schedule = await getRgsuScheduleWithProxyRecovery(
+            refreshedGroupId,
             group.title,
             week,
-            refreshedTokens,
+            await rgsuGetToken(),
           );
         }
 

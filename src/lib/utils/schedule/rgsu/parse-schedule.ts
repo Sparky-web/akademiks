@@ -6,7 +6,7 @@ import { LessonParsed } from "../flatten-schedule";
 import { RgsuTokens } from "./get-token";
 import FormData from "form-data";
 import { client } from "./axios-client";
-import { RgsuBotBlockedError } from "./errors";
+import { RgsuBotBlockedError, RgsuGroupGuidNotFoundError } from "./errors";
 
 const rgsuTimetable = config.timetable;
 
@@ -323,6 +323,9 @@ export async function rgsuGetTwoWeeklySchedule(
     if (!data.success) {
       if (data.message?.includes("Возможно вы бот")) {
         throw new RgsuBotBlockedError();
+      }
+      if (data.message?.includes("Не удалось найти GUID группы")) {
+        throw new RgsuGroupGuidNotFoundError(groupId);
       }
       throw new Error(JSON.stringify(data));
     }
