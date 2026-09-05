@@ -107,7 +107,6 @@ export default async function updateSchedule(
                 connectOrCreate: {
                   where: {
                     id: translit(lesson.to.teacher || "Не указан"),
-                    name: lesson.to.teacher || "Не указан",
                   },
                   create: {
                     id: translit(lesson.to.teacher || "Не указан"),
@@ -198,7 +197,6 @@ export default async function updateSchedule(
                 connectOrCreate: {
                   where: {
                     id: translit(lesson.to.teacher || "Не указан"),
-                    name: lesson.to.teacher || "Не указан",
                   },
                   create: {
                     id: translit(lesson.to.teacher || "Не указан"),

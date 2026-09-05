@@ -8,6 +8,8 @@ export default async function notifyFromReports(reports: ResultItem[], shouldDis
     if (typeof shouldDisplayForTeachers === 'undefined') shouldDisplayForTeachers = true
 
     for (let report of reports) {
+        if (report.status !== "success" || !report.item) continue
+
         if (shouldDisplayForTeachers) {
             teachersToNotify.add(report.item.Teacher?.name || report.item.teacher)
             teachersToNotify.add(report.inputItem?.Teacher?.name || report.inputItem?.teacher)
