@@ -56,6 +56,7 @@ export default function Menu() {
 
   const desktopMenu = [...menu];
   if (user && user.isAdmin) {
+    desktopMenu.push({ title: "API-токены", path: "/lk/api-tokens", icon: File });
     desktopMenu.push({
       title: "Управление расписанием",
       path: "/lk/add-schedule",
