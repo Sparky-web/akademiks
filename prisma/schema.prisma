@@ -145,3 +145,15 @@ model PushSubscription {
   userId   String
   User     User   @relation(fields: [userId], references: [id])
 }
+
+model ApiToken {
+  id           String    @id @default(cuid())
+  name         String
+  tokenHash    String    @unique
+  prefix       String
+  createdById  String
+  createdAt    DateTime  @default(now())
+  revokedAt    DateTime?
+  lastUsedAt   DateTime?
+  requestCount BigInt    @default(0)
+}
