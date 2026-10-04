@@ -32,7 +32,8 @@ API дополняет существующие маршруты и tRPC. Баз
 Начало включено, конец исключён. Часовой пояс: Asia/Yekaterinburg для УРТК, Europe/Moscow для РГСУ.
 Ответ содержит `data`, `entity` и `period: { start, end, timezone }`.
 `data` — плоский список занятий по времени начала, затем по ID.
-Поля занятия: `id`, `title`, `start`, `end`, `index`, `subgroup`, `type`, `teacher`, `group`, `classroom`.
+Поля занятия: `id`, `title`, `start`, `end`, `index`, `subgroup`, `type`, `meetingUrl`, `teacher`, `group`, `classroom`.
+`meetingUrl` — ссылка на видеовстречу, которую добавил подтверждённый преподаватель, либо null.
 Связи могут быть null. Даты занятий передаются в ISO 8601 UTC.
 Скрытые от студентов занятия исключены для обоих типов расписания.
 Отсутствие занятий: HTTP 200 и пустой `data`. Неизвестный ID: HTTP 404.

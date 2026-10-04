@@ -128,6 +128,7 @@ export async function GET(
         index: true,
         subgroup: true,
         type: true,
+        meetingUrl: true,
         Teacher: { select: { id: true, name: true } },
         Group: { select: { id: true, title: true } },
         Classroom: { select: { id: true, name: true, address: true } },
