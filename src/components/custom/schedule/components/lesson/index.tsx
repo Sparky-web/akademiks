@@ -10,6 +10,7 @@ import { Slot } from "../day";
 import React from "react";
 import { Separator } from "~/components/ui/separator";
 import MeetingLink from "./meeting-link";
+import LessonComment from "./lesson-comment";
 
 interface LessonProps {
   slot: Slot;
@@ -97,6 +98,7 @@ export default function Lesson({ slot, type }: LessonProps) {
                   )}
               </div>
               <MeetingLink lesson={lesson} />
+              <LessonComment lesson={lesson} />
             </div>
           </React.Fragment>
         ))}

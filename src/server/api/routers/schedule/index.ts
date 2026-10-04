@@ -23,7 +23,9 @@ import { allSchedulesProcedure } from "./_lib/utils/all-schedules-procedure";
 import teachers from "../teachers";
 import getClassroomSchedule from "./_lib/utils/get-classroom-schedule";
 import { normalizeMeetingUrl } from "~/lib/utils/meeting-url";
+import { normalizeLessonComment } from "~/lib/utils/lesson-comment";
 import { TRPCError } from "@trpc/server";
+import { getOwnLessonOfVerifiedTeacher } from "./_lib/utils/get-own-lesson";
 
 export default createTRPCRouter({
   generate: protectedProcedure
@@ -102,29 +104,7 @@ export default createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const user = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
-      });
-
-      if (!user || user.role !== 2 || !user.teacherId)
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Ссылку может добавить только преподаватель",
-        });
-      if (!user.isTeacherVerified)
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Аккаунт преподавателя ещё не подтверждён администратором",
-        });
-
-      const lesson = await ctx.db.lesson.findUnique({
-        where: { id: input.lessonId },
-      });
-      if (!lesson || lesson.teacherId !== user.teacherId)
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Можно менять ссылку только в своих парах",
-        });
+      await getOwnLessonOfVerifiedTeacher(ctx, input.lessonId, "ссылку");
 
       let meetingUrl: string | null;
       try {
@@ -136,18 +116,43 @@ export default createTRPCRouter({
         });
       }
 
-      // Одна и та же пара у нескольких групп хранится отдельными строками.
-      // Преподаватель ведёт её одной встречей, поэтому ссылка ставится на все такие строки.
-      const { count } = await ctx.db.lesson.updateMany({
-        where: {
-          teacherId: user.teacherId,
-          start: lesson.start,
-          end: lesson.end,
-        },
+      // Ссылка относится к одной паре: у разных групп в одно время
+      // могут быть разные встречи.
+      await ctx.db.lesson.update({
+        where: { id: input.lessonId },
         data: { meetingUrl },
       });
 
-      return { meetingUrl, updated: count };
+      return { meetingUrl };
+    }),
+
+  setComment: protectedProcedure
+    .input(
+      z.object({
+        lessonId: z.number().int(),
+        // Пустая строка или null убирают комментарий.
+        comment: z.string().nullable(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await getOwnLessonOfVerifiedTeacher(ctx, input.lessonId, "комментарий");
+
+      let comment: string | null;
+      try {
+        comment = normalizeLessonComment(input.comment ?? "");
+      } catch (e) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: (e as Error).message,
+        });
+      }
+
+      await ctx.db.lesson.update({
+        where: { id: input.lessonId },
+        data: { comment },
+      });
+
+      return { comment };
     }),
 
   update: protectedProcedure
@@ -288,7 +293,7 @@ export default createTRPCRouter({
                 shouldDisplayForStudents: input.shouldDisplayForStudents,
                 ...(lesson.teacherId !== undefined &&
                 lesson.teacherId !== data.teacherId
-                  ? { meetingUrl: null }
+                  ? { meetingUrl: null, comment: null }
                   : {}),
               },
             });

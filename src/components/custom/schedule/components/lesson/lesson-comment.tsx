@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Plus, Video } from "lucide-react";
+import { MessageSquare, Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAppSelector } from "~/app/_lib/client-store";
@@ -13,21 +13,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
+import { Textarea } from "~/components/ui/textarea";
 import { cn } from "~/lib/utils";
+import { LESSON_COMMENT_MAX_LENGTH } from "~/lib/utils/lesson-comment";
 import { type Lesson } from "~/types/schedule";
 import { api } from "~/trpc/react";
 
-interface MeetingLinkProps {
-  lesson: Pick<Lesson, "id" | "teacherId" | "meetingUrl">;
+interface LessonCommentProps {
+  lesson: Pick<Lesson, "id" | "teacherId" | "comment">;
   className?: string;
 }
 
 /**
- * Ссылка на видеовстречу: студенты видят кнопку «Подключиться»,
- * подтверждённый преподаватель дополнительно может менять ссылку в своих парах.
+ * Комментарий преподавателя к паре: его видят все,
+ * менять может только подтверждённый преподаватель в своих парах.
  */
-export default function MeetingLink({ lesson, className }: MeetingLinkProps) {
+export default function LessonComment({
+  lesson,
+  className,
+}: LessonCommentProps) {
   const user = useAppSelector((e) => e.user?.user);
 
   const canEdit =
@@ -41,15 +45,15 @@ export default function MeetingLink({ lesson, className }: MeetingLinkProps) {
   const [value, setValue] = useState("");
 
   const utils = api.useUtils();
-  const { mutateAsync, isPending } = api.schedule.setMeetingUrl.useMutation();
+  const { mutateAsync, isPending } = api.schedule.setComment.useMutation();
 
-  if (!lesson.meetingUrl && !canEdit) return null;
+  if (!lesson.comment && !canEdit) return null;
 
-  const save = async (url: string | null) => {
+  const save = async (comment: string | null) => {
     try {
-      await mutateAsync({ lessonId: lesson.id, url });
+      await mutateAsync({ lessonId: lesson.id, comment });
       await utils.schedule.get.invalidate();
-      toast.success(url ? "Ссылка сохранена" : "Ссылка удалена");
+      toast.success(comment ? "Комментарий сохранён" : "Комментарий удалён");
       setIsOpen(false);
     } catch (e) {
       toast.error((e as Error).message);
@@ -57,14 +61,14 @@ export default function MeetingLink({ lesson, className }: MeetingLinkProps) {
   };
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      {lesson.meetingUrl && (
-        <Button asChild size="xs" variant="tenary">
-          <a href={lesson.meetingUrl} target="_blank" rel="noopener noreferrer">
-            <Video className="h-4 w-4" />
-            Подключиться
-          </a>
-        </Button>
+    <div className={cn("flex flex-col items-start gap-1", className)}>
+      {lesson.comment && (
+        <div className="flex items-start gap-2 text-sm text-muted-foreground">
+          <MessageSquare className="mt-0.5 h-4 w-4 shrink-0" />
+          <span className="whitespace-pre-wrap break-words">
+            {lesson.comment}
+          </span>
+        </div>
       )}
 
       {canEdit && (
@@ -72,16 +76,19 @@ export default function MeetingLink({ lesson, className }: MeetingLinkProps) {
           size="xs"
           variant="tenary"
           onClick={() => {
-            setValue(lesson.meetingUrl ?? "");
+            setValue(lesson.comment ?? "");
             setIsOpen(true);
           }}
         >
-          {lesson.meetingUrl ? (
-            <Pencil className="h-4 w-4" />
+          {lesson.comment ? (
+            <>
+              <Pencil className="h-4 w-4" />
+              Изменить комментарий
+            </>
           ) : (
             <>
               <Plus className="h-4 w-4" />
-              Ссылка на видеовстречу
+              Комментарий
             </>
           )}
         </Button>
@@ -91,21 +98,23 @@ export default function MeetingLink({ lesson, className }: MeetingLinkProps) {
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Ссылка на видеовстречу</DialogTitle>
+              <DialogTitle>Комментарий к паре</DialogTitle>
               <DialogDescription>
-                Ссылка появится в расписании студентов этой пары. У каждой
-                группы своя ссылка, даже если пары идут в одно время.
+                Комментарий увидят все, кто смотрит расписание этой пары.
               </DialogDescription>
             </DialogHeader>
-            <Input
-              type="url"
-              inputMode="url"
-              placeholder="https://telemost.yandex.ru/j/…"
+            <Textarea
+              rows={4}
+              maxLength={LESSON_COMMENT_MAX_LENGTH}
+              placeholder="Например: принести ноутбук, тест в начале пары"
               value={value}
               onChange={(e) => setValue(e.target.value)}
             />
+            <div className="text-right text-xs text-muted-foreground">
+              {value.length}/{LESSON_COMMENT_MAX_LENGTH}
+            </div>
             <DialogFooter className="gap-2">
-              {lesson.meetingUrl && (
+              {lesson.comment && (
                 <Button
                   variant="destructive"
                   disabled={isPending}

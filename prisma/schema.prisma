@@ -38,6 +38,7 @@ model Lesson {
   shouldDisplayForStudents Boolean @default(true)
 
   meetingUrl String?
+  comment    String?
 }
 
 model Classroom {
