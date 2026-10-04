@@ -15,17 +15,21 @@ import {
 } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { cn } from "~/lib/utils";
+import { isDistantClassroom } from "~/lib/utils/distant-classroom";
 import { type Lesson } from "~/types/schedule";
 import { api } from "~/trpc/react";
 
 interface MeetingLinkProps {
-  lesson: Pick<Lesson, "id" | "teacherId" | "meetingUrl">;
+  lesson: Pick<Lesson, "id" | "teacherId" | "meetingUrl"> & {
+    Classroom?: { name: string } | null;
+  };
   className?: string;
 }
 
 /**
  * Ссылка на видеовстречу: студенты видят кнопку «Подключиться»,
  * подтверждённый преподаватель дополнительно может менять ссылку в своих парах.
+ * Ссылка нужна только дистанционным парам — кабинет «Дистант».
  */
 export default function MeetingLink({ lesson, className }: MeetingLinkProps) {
   const user = useAppSelector((e) => e.user?.user);
@@ -43,6 +47,7 @@ export default function MeetingLink({ lesson, className }: MeetingLinkProps) {
   const utils = api.useUtils();
   const { mutateAsync, isPending } = api.schedule.setMeetingUrl.useMutation();
 
+  if (!isDistantClassroom(lesson.Classroom?.name)) return null;
   if (!lesson.meetingUrl && !canEdit) return null;
 
   const save = async (url: string | null) => {

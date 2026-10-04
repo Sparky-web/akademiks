@@ -23,7 +23,10 @@ import { allSchedulesProcedure } from "./_lib/utils/all-schedules-procedure";
 import teachers from "../teachers";
 import getClassroomSchedule from "./_lib/utils/get-classroom-schedule";
 import { normalizeMeetingUrl } from "~/lib/utils/meeting-url";
-import { normalizeLessonComment } from "~/lib/utils/lesson-comment";
+import {
+  DISTANT_CLASSROOM_NAME,
+  isDistantClassroom,
+} from "~/lib/utils/distant-classroom";
 import { TRPCError } from "@trpc/server";
 import { getOwnLessonOfVerifiedTeacher } from "./_lib/utils/get-own-lesson";
 
@@ -93,7 +96,17 @@ export default createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      await getOwnLessonOfVerifiedTeacher(ctx, input.lessonId, "ссылку");
+      const lesson = await getOwnLessonOfVerifiedTeacher(
+        ctx,
+        input.lessonId,
+        "ссылку",
+      );
+
+      if (!isDistantClassroom(lesson.Classroom?.name))
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Ссылку можно добавить только к паре в кабинете «${DISTANT_CLASSROOM_NAME}»`,
+        });
 
       let meetingUrl: string | null;
       try {
@@ -113,35 +126,6 @@ export default createTRPCRouter({
       });
 
       return { meetingUrl };
-    }),
-
-  setComment: protectedProcedure
-    .input(
-      z.object({
-        lessonId: z.number().int(),
-        // Пустая строка или null убирают комментарий.
-        comment: z.string().nullable(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      await getOwnLessonOfVerifiedTeacher(ctx, input.lessonId, "комментарий");
-
-      let comment: string | null;
-      try {
-        comment = normalizeLessonComment(input.comment ?? "");
-      } catch (e) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: (e as Error).message,
-        });
-      }
-
-      await ctx.db.lesson.update({
-        where: { id: input.lessonId },
-        data: { comment },
-      });
-
-      return { comment };
     }),
 
   update: protectedProcedure
@@ -282,7 +266,7 @@ export default createTRPCRouter({
                 shouldDisplayForStudents: input.shouldDisplayForStudents,
                 ...(lesson.teacherId !== undefined &&
                 lesson.teacherId !== data.teacherId
-                  ? { meetingUrl: null, comment: null }
+                  ? { meetingUrl: null }
                   : {}),
               },
             });

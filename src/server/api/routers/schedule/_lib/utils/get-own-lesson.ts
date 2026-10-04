@@ -25,7 +25,10 @@ export async function getOwnLessonOfVerifiedTeacher(
       message: "Аккаунт преподавателя ещё не подтверждён администратором",
     });
 
-  const lesson = await ctx.db.lesson.findUnique({ where: { id: lessonId } });
+  const lesson = await ctx.db.lesson.findUnique({
+    where: { id: lessonId },
+    include: { Classroom: true },
+  });
   if (!lesson || lesson.teacherId !== user.teacherId)
     throw new TRPCError({
       code: "FORBIDDEN",

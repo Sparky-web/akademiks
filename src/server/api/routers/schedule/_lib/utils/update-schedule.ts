@@ -167,7 +167,7 @@ export default async function updateSchedule(
             throw new Error("Не найдено пары для обновления");
           }
 
-          // Ссылку и комментарий оставил прежний преподаватель, новому они не принадлежат.
+          // Ссылку поставил прежний преподаватель, новому она не принадлежит.
           const isTeacherChanged =
             found.teacherId !== translit(lesson.to.teacher || "Не указан");
 
@@ -176,7 +176,7 @@ export default async function updateSchedule(
               id: found.id,
             },
             data: {
-              ...(isTeacherChanged ? { meetingUrl: null, comment: null } : {}),
+              ...(isTeacherChanged ? { meetingUrl: null } : {}),
               title: lesson.to.title,
               start: lesson.to.start,
               end: lesson.to.end,

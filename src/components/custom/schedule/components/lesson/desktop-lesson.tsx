@@ -16,7 +16,6 @@ import { FormApi, ReactFormApi } from "@tanstack/react-form";
 import { classroom } from "googleapis/build/src/apis/classroom";
 import { isLessonsEqual } from "../../utils/is-lessons-equal";
 import MeetingLink from "./meeting-link";
-import LessonComment from "./lesson-comment";
 
 type LessonProps = {
   type: "student" | "teacher" | "classroom";
@@ -132,10 +131,6 @@ export default function DesktopLesson(props: LessonProps) {
 
               {field.state.value.id && (
                 <MeetingLink lesson={field.state.value} className="mt-1" />
-              )}
-
-              {field.state.value.id && (
-                <LessonComment lesson={field.state.value} className="mt-1" />
               )}
             </>
           )}

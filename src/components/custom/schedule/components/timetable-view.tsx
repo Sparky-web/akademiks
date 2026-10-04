@@ -15,7 +15,6 @@ import { Clock, MapPin, User, Users, Calendar } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { Lesson } from "~/types/schedule";
 import MeetingLink from "./lesson/meeting-link";
-import LessonComment from "./lesson/lesson-comment";
 
 // Types
 interface TimeSlot {
@@ -227,13 +226,6 @@ export function ScheduleTimetableView({
                   </div>
 
                   <MeetingLink
-                    lesson={
-                      lessons.find((e) => e.id === selectedLesson.id) ??
-                      selectedLesson
-                    }
-                  />
-
-                  <LessonComment
                     lesson={
                       lessons.find((e) => e.id === selectedLesson.id) ??
                       selectedLesson
