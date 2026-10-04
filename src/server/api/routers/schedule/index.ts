@@ -23,7 +23,12 @@ import { allSchedulesProcedure } from "./_lib/utils/all-schedules-procedure";
 import teachers from "../teachers";
 import getClassroomSchedule from "./_lib/utils/get-classroom-schedule";
 import { normalizeMeetingUrl } from "~/lib/utils/meeting-url";
+import {
+  DISTANT_CLASSROOM_NAME,
+  isDistantClassroom,
+} from "~/lib/utils/distant-classroom";
 import { TRPCError } from "@trpc/server";
+import { getOwnLessonOfVerifiedTeacher } from "./_lib/utils/get-own-lesson";
 
 export default createTRPCRouter({
   generate: protectedProcedure
@@ -79,18 +84,7 @@ export default createTRPCRouter({
         throw new TRPCClientError("Нет параметров для отображения расписания");
       })();
 
-      // Ссылки на видеовстречи видны только авторизованным пользователям.
-      if (ctx.session?.user) return schedule;
-      return {
-        ...schedule,
-        data: schedule.data.map((day) => ({
-          ...day,
-          lessons: day.lessons.map((lesson) => ({
-            ...lesson,
-            meetingUrl: null,
-          })),
-        })),
-      };
+      return schedule;
     }),
 
   setMeetingUrl: protectedProcedure
@@ -102,28 +96,16 @@ export default createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const user = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
-      });
+      const lesson = await getOwnLessonOfVerifiedTeacher(
+        ctx,
+        input.lessonId,
+        "ссылку",
+      );
 
-      if (!user || user.role !== 2 || !user.teacherId)
+      if (!isDistantClassroom(lesson.Classroom?.name))
         throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Ссылку может добавить только преподаватель",
-        });
-      if (!user.isTeacherVerified)
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Аккаунт преподавателя ещё не подтверждён администратором",
-        });
-
-      const lesson = await ctx.db.lesson.findUnique({
-        where: { id: input.lessonId },
-      });
-      if (!lesson || lesson.teacherId !== user.teacherId)
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Можно менять ссылку только в своих парах",
+          code: "BAD_REQUEST",
+          message: `Ссылку можно добавить только к паре в кабинете «${DISTANT_CLASSROOM_NAME}»`,
         });
 
       let meetingUrl: string | null;
@@ -136,18 +118,14 @@ export default createTRPCRouter({
         });
       }
 
-      // Одна и та же пара у нескольких групп хранится отдельными строками.
-      // Преподаватель ведёт её одной встречей, поэтому ссылка ставится на все такие строки.
-      const { count } = await ctx.db.lesson.updateMany({
-        where: {
-          teacherId: user.teacherId,
-          start: lesson.start,
-          end: lesson.end,
-        },
+      // Ссылка относится к одной паре: у разных групп в одно время
+      // могут быть разные встречи.
+      await ctx.db.lesson.update({
+        where: { id: input.lessonId },
         data: { meetingUrl },
       });
 
-      return { meetingUrl, updated: count };
+      return { meetingUrl };
     }),
 
   update: protectedProcedure

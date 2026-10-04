@@ -32,8 +32,14 @@ export default function Page() {
     api.auth.createResetPasswordToken.useMutation();
 
   const utils = api.useUtils();
-  const { mutateAsync: setTeacherVerified, isPending: isVerifyPending } =
-    api.users.setTeacherVerified.useMutation();
+  const {
+    mutateAsync: setTeacherVerified,
+    isPending: isVerifyPending,
+    variables: verifyVariables,
+  } = api.users.setTeacherVerified.useMutation();
+  // Блокируем только кнопку строки, по которой идёт запрос.
+  const isVerifyPendingFor = (userId: string) =>
+    isVerifyPending && verifyVariables?.userId === userId;
 
   const [resetToken, setResetToken] = useState<{
     token: string;
@@ -151,7 +157,7 @@ export default function Page() {
                       size={"xs"}
                       variant={"tenary"}
                       className="shrink-0"
-                      disabled={isVerifyPending}
+                      disabled={isVerifyPendingFor(id)}
                       onClick={() => toggleVerified(id, false)}
                     >
                       Отозвать
@@ -170,7 +176,7 @@ export default function Page() {
                   <Button
                     size={"xs"}
                     className="shrink-0"
-                    disabled={isVerifyPending || !teacherId}
+                    disabled={isVerifyPendingFor(id) || !teacherId}
                     title={
                       teacherId
                         ? undefined
