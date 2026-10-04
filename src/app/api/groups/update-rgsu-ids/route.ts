@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { isCronAuthorized } from "~/lib/utils/cron-auth";
 import { updateRgsuGroupIds } from "~/lib/utils/schedule/rgsu/parse-groups";
 
-export const maxDuration = 1800;
+export const maxDuration = 21600;
 
 let activeGroupUpdate: ReturnType<typeof updateRgsuGroupIds> | null = null;
 
@@ -28,19 +28,17 @@ export async function GET(request: Request) {
     const result = await activeGroupUpdate;
 
     console.log(
-      `Обновление завершено. Обновлено: ${result.updated}/${result.total}, добавлено базовых: ${result.created}`,
+      `Обновление завершено. Обновлено: ${result.updated}/${result.total}, добавлено: ${result.created}`,
     );
 
-    return NextResponse.json({
-      success: true,
-      message: `Обновлено ${result.updated} из ${result.total} групп, добавлено базовых: ${result.created}`,
-      data: {
-        updated: result.updated,
-        created: result.created,
-        total: result.total,
-        errors: result.errors,
+    return NextResponse.json(
+      {
+        success: result.errors.length === 0,
+        message: `Обновлено ${result.updated} из ${result.total} групп, добавлено: ${result.created}`,
+        data: result,
       },
-    });
+      { status: result.errors.length ? 502 : 200 },
+    );
   } catch (error) {
     console.error("Ошибка при обновлении ID групп:", error);
 

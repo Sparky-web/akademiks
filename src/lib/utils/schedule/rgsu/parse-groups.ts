@@ -5,6 +5,13 @@ import { client } from "./axios-client";
 import { RgsuBotBlockedError, isRgsuBotBlockedError } from "./errors";
 import { ensureRgsuProxy, rotateRgsuProxyAfterBlock } from "./proxy-manager";
 import { sendRgsuTelegramMessage } from "./telegram";
+import {
+  createGroupNotificationQueue,
+  type NewRgsuGroup,
+} from "./group-notifications";
+import { withGroupUpdateLock } from "./group-update-lock";
+import { RGSU_SCHEDULE_HEADERS } from "./request-headers";
+import { parseGroupsFromTeachersSchedule } from "./parse-groups-from-teachers-schedule";
 
 interface RGSUGroupData {
   id: string;
@@ -22,25 +29,6 @@ interface RGSUGroupsResponse {
   message?: string;
   data: RGSUGroupData[];
 }
-
-const RGSU_SCHEDULE_HEADERS = {
-  accept: "*/*",
-  "accept-language": "ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7",
-  "cache-control": "no-cache",
-  pragma: "no-cache",
-  priority: "u=1, i",
-  "sec-ch-ua-platform": '"macOS"',
-  "sec-fetch-dest": "empty",
-  "sec-fetch-mode": "cors",
-  "sec-fetch-site": "same-origin",
-  "x-requested-with": "XMLHttpRequest",
-  "user-agent":
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-  referer: "https://rgsu.net/students/schedule",
-  "sec-ch-ua": `"Google Chrome";v="143", "Chromium";v="143", "Not A(Brand";v="24"`,
-  "sec-ch-ua-mobile": "?0",
-  origin: "https://rgsu.net",
-} as const;
 
 async function fetchRgsuGroupsByQueryWithTokens(
   query: string,
@@ -176,106 +164,192 @@ function stripTrailingSubgroupSuffix(title: string): string | null {
   return m[1];
 }
 
-/**
- * Обновляет additional_id для всех групп из RGSU API, затем подтягивает остальные группы
- * того же «семейства» (по ответу API) и добавляет отсутствующие в базе.
- */
-export async function updateRgsuGroupIds(): Promise<{
-  updated: number;
-  created: number;
-  total: number;
-  errors: string[];
-}> {
+/** Обновляет GUID и добавляет группы из поиска и расписаний преподавателей. */
+export async function updateRgsuGroupIds(
+  options: {
+    dryRun?: boolean;
+    addOnly?: boolean;
+    teacherConcurrency?: number;
+  } = {},
+) {
+  if (options.dryRun) return runGroupUpdate(options);
+  return withGroupUpdateLock(() => runGroupUpdate(options));
+}
+
+async function runGroupUpdate(options: {
+  dryRun?: boolean;
+  addOnly?: boolean;
+  teacherConcurrency?: number;
+}) {
+  const notifications = createGroupNotificationQueue();
+  const flushNotifications = () =>
+    notifications.flush(async (group) => {
+      const saved = await db.group.findUnique({ where: { id: group.id } });
+      return saved?.title === group.title;
+    });
+  if (!options.dryRun) await flushNotifications();
   await ensureRgsuProxy();
   let tokens = await rgsuGetToken();
-
   const groups = await db.group.findMany();
+  const teachers = await db.teacher.findMany({ select: { name: true } });
+  const knownTitles = new Set(groups.map((group) => group.title));
+  const addedGroups: NewRgsuGroup[] = [];
   let updated = 0;
-  let created = 0;
   const errors: string[] = [];
-
-  for (const group of groups) {
-    try {
-      const response = await fetchRgsuGroupsWithRecovery(group.title, tokens);
-      const data = response.data;
-      tokens = response.tokens;
-
-      const exactMatch = findExactRgsuGroup(data, group.title);
-
-      if (exactMatch) {
-        await db.group.update({
-          where: { id: group.id },
-          data: { additionalId: exactMatch.id },
-        });
-
-        console.log(
-          `Обновлен additional_id для группы ${group.title}: ${exactMatch.id}`,
-        );
-        updated++;
-      } else {
-        console.log(`Точное совпадение не найдено для группы: ${group.title}`);
-        errors.push(`Точное совпадение не найдено для группы: ${group.title}`);
-      }
-    } catch (groupError) {
-      if (isRgsuBotBlockedError(groupError)) throw groupError;
-      console.error(`Ошибка при обновлении группы ${group.title}:`, groupError);
-      errors.push(`Ошибка при обновлении группы ${group.title}: ${groupError}`);
+  const warnings: string[] = [];
+  const cache = new Map<string, RGSUGroupData[]>();
+  const lookup = async (query: string) => {
+    const cached = cache.get(query);
+    if (cached) return cached;
+    const response = await fetchRgsuGroupsWithRecovery(query, tokens);
+    tokens = response.tokens;
+    cache.set(query, response.data);
+    return response.data;
+  };
+  const addGroup = async (
+    item: RGSUGroupData,
+    source: NewRgsuGroup["source"],
+  ) => {
+    if (knownTitles.has(item.name)) return;
+    if (!item.name?.trim() || !item.id?.trim()) {
+      throw new Error("РГСУ вернул группу без названия или GUID");
     }
-  }
+    const id = translit(item.name);
+    const conflict =
+      groups.find(
+        (group) => group.id === id || group.additionalId === item.id,
+      ) ??
+      addedGroups.find(
+        (group) => group.id === id || group.additionalId === item.id,
+      );
+    if (conflict)
+      throw new Error(`Конфликт ID группы ${item.name} с ${conflict.title}`);
+    const group: NewRgsuGroup = {
+      id,
+      title: item.name,
+      additionalId: item.id,
+      source,
+    };
+    if (!options.dryRun) {
+      // Повторная проверка нужна, если группа появилась после начала обновления.
+      const existing = await db.group.findFirst({
+        where: {
+          OR: [{ id }, { title: item.name }, { additionalId: item.id }],
+        },
+      });
+      if (existing?.title === item.name) {
+        knownTitles.add(item.name);
+        return;
+      }
+      if (existing)
+        throw new Error(`Конфликт ID группы ${item.name} с ${existing.title}`);
+      // Сначала сохраняем очередь. При сбое INSERT неподтверждённая запись не отправится.
+      await notifications.enqueue(group);
+      await db.group.create({
+        data: { id, title: item.name, additionalId: item.id },
+      });
+    }
+    knownTitles.add(item.name);
+    addedGroups.push(group);
+    console.log(
+      `${options.dryRun ? "Будет добавлена" : "Добавлена"} группа ${item.name}; источник: ${source}`,
+    );
+  };
 
-  const groupsAfter = await db.group.findMany();
-  const baseTitles = new Set<string>();
-  for (const g of groupsAfter) {
-    const base = stripTrailingSubgroupSuffix(g.title);
-    if (base) baseTitles.add(base);
-  }
-
-  for (const baseTitle of baseTitles) {
-    try {
-      const response = await fetchRgsuGroupsWithRecovery(baseTitle, tokens);
-      const data = response.data;
-      tokens = response.tokens;
-
-      if (data.length === 0) {
+  let teacherResult:
+    | Awaited<ReturnType<typeof parseGroupsFromTeachersSchedule>>
+    | undefined;
+  try {
+    for (const group of options.addOnly ? [] : groups) {
+      try {
+        const exact = findExactRgsuGroup(
+          await lookup(group.title),
+          group.title,
+        );
+        if (exact) {
+          if (!options.dryRun) {
+            await db.group.update({
+              where: { id: group.id },
+              data: { additionalId: exact.id },
+            });
+          }
+          group.additionalId = exact.id;
+          updated++;
+        } else {
+          warnings.push(`Точное совпадение не найдено: ${group.title}`);
+        }
+      } catch (error) {
+        if (isRgsuBotBlockedError(error)) throw error;
         errors.push(
-          `В API нет групп для префикса (ожидались варианты вроде ${baseTitle}, ${baseTitle}-1): ${baseTitle}`,
+          `Группа ${group.title}: ${error instanceof Error ? error.message : String(error)}`,
         );
-        continue;
       }
-
-      for (const item of data) {
-        const already = await db.group.findFirst({
-          where: { title: item.name },
-        });
-        if (already) continue;
-
-        await db.group.create({
-          data: {
-            id: translit(item.name),
-            title: item.name,
-            additionalId: item.id,
-          },
-        });
-        created++;
-        console.log(`Добавлена группа ${item.name}, additionalId: ${item.id}`);
+      if ((updated + errors.length + warnings.length) % 50 === 0) {
+        console.log(
+          `GUID групп: ${updated + errors.length + warnings.length}/${groups.length}`,
+        );
       }
-    } catch (e) {
-      if (isRgsuBotBlockedError(e)) throw e;
-      console.error(
-        `Ошибка при досинхронизации групп по префиксу ${baseTitle}:`,
-        e,
-      );
-      errors.push(
-        `Ошибка при досинхронизации групп по префиксу ${baseTitle}: ${e}`,
-      );
     }
+
+    teacherResult = await parseGroupsFromTeachersSchedule(
+      teachers,
+      tokens,
+      options.teacherConcurrency ?? 1,
+    );
+    tokens = teacherResult.tokens;
+    errors.push(...teacherResult.errors);
+    warnings.push(...teacherResult.warnings);
+    for (const title of teacherResult.titles) {
+      if (knownTitles.has(title)) continue;
+      try {
+        const exact = findExactRgsuGroup(await lookup(title), title);
+        if (exact) await addGroup(exact, "teachers");
+        else
+          warnings.push(
+            `Группа из расписания преподавателя не найдена в поиске: ${title}`,
+          );
+      } catch (error) {
+        if (isRgsuBotBlockedError(error)) throw error;
+        errors.push(
+          `Новая группа ${title}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
+    const baseTitles = new Set(
+      [...knownTitles]
+        .map(stripTrailingSubgroupSuffix)
+        .filter((title): title is string => Boolean(title)),
+    );
+    for (const baseTitle of baseTitles) {
+      try {
+        for (const item of await lookup(baseTitle))
+          await addGroup(item, "family");
+      } catch (error) {
+        if (isRgsuBotBlockedError(error)) throw error;
+        errors.push(
+          `Поиск ${baseTitle}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+  } finally {
+    // Уведомляем о сохранённых группах даже при сбое следующего запроса РГСУ.
+    if (!options.dryRun) await flushNotifications();
   }
 
   return {
     updated,
-    created,
+    created: addedGroups.length,
     total: groups.length,
+    teachersChecked: teacherResult?.checked ?? 0,
+    teachersTotal: teacherResult?.total ?? teachers.length,
+    teachersNotFound: teacherResult?.warnings.length ?? 0,
+    teacherGroupTitles: teacherResult?.titles.length ?? 0,
+    addedGroups,
     errors,
+    warnings,
+    dryRun: Boolean(options.dryRun),
+    addOnly: Boolean(options.addOnly),
   };
 }
 
