@@ -143,11 +143,14 @@ export default function Page() {
 
               if (isTeacherVerified)
                 return (
-                  <div className="flex items-center gap-2">
-                    <Badge>Подтверждён</Badge>
+                  <div className="flex items-center gap-2 whitespace-nowrap">
+                    <Badge className="shrink-0 whitespace-nowrap">
+                      Подтверждён
+                    </Badge>
                     <Button
                       size={"xs"}
                       variant={"tenary"}
+                      className="shrink-0"
                       disabled={isVerifyPending}
                       onClick={() => toggleVerified(id, false)}
                     >
@@ -157,10 +160,16 @@ export default function Page() {
                 );
 
               return (
-                <div className="flex items-center gap-2">
-                  <Badge variant={"outline"}>Не подтверждён</Badge>
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <Badge
+                    variant={"outline"}
+                    className="shrink-0 whitespace-nowrap"
+                  >
+                    Не подтверждён
+                  </Badge>
                   <Button
                     size={"xs"}
+                    className="shrink-0"
                     disabled={isVerifyPending || !teacherId}
                     title={
                       teacherId
