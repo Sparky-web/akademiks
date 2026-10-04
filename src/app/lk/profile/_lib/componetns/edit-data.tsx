@@ -154,6 +154,14 @@ export default function EditData() {
 
 
 
+                    {user?.role === 2 && user.teacherId && (
+                        <p className="text-sm text-muted-foreground">
+                            {user.isTeacherVerified
+                                ? 'Аккаунт преподавателя подтверждён администратором. Вы можете добавлять ссылки на видеовстречи в своём расписании.'
+                                : 'Аккаунт преподавателя ожидает подтверждения администратором. После подтверждения вы сможете добавлять ссылки на видеовстречи. При смене email или преподавателя подтверждение нужно пройти заново.'}
+                        </p>
+                    )}
+
                     {/* <form.Field name="groupId">
                         {(field) => (
                             <div className="grid gap-1.5">

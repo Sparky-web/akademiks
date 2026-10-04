@@ -22,6 +22,13 @@ import generateReport from "./_lib/utils/generate-report";
 import { allSchedulesProcedure } from "./_lib/utils/all-schedules-procedure";
 import teachers from "../teachers";
 import getClassroomSchedule from "./_lib/utils/get-classroom-schedule";
+import { normalizeMeetingUrl } from "~/lib/utils/meeting-url";
+import {
+  DISTANT_CLASSROOM_NAME,
+  isDistantClassroom,
+} from "~/lib/utils/distant-classroom";
+import { TRPCError } from "@trpc/server";
+import { getOwnLessonOfVerifiedTeacher } from "./_lib/utils/get-own-lesson";
 
 export default createTRPCRouter({
   generate: protectedProcedure
@@ -57,23 +64,68 @@ export default createTRPCRouter({
     .query(async ({ input, ctx }) => {
       const isAdmin = ctx.session?.user?.isAdmin;
 
-      if (input.groupId) {
-        return await getStudentSchedule(
-          input.groupId,
-          input.weekStart,
-          isAdmin || false,
-        );
-      } else if (input.teacherId) {
-        return await getTeacherSchedule(input.teacherId, input.weekStart);
-      } else if (input.classroomId) {
-        return await getClassroomSchedule(
-          input.classroomId,
-          input.weekStart,
-          isAdmin || false,
-        );
+      const schedule = await (async () => {
+        if (input.groupId) {
+          return await getStudentSchedule(
+            input.groupId,
+            input.weekStart,
+            isAdmin || false,
+          );
+        } else if (input.teacherId) {
+          return await getTeacherSchedule(input.teacherId, input.weekStart);
+        } else if (input.classroomId) {
+          return await getClassroomSchedule(
+            input.classroomId,
+            input.weekStart,
+            isAdmin || false,
+          );
+        }
+
+        throw new TRPCClientError("Нет параметров для отображения расписания");
+      })();
+
+      return schedule;
+    }),
+
+  setMeetingUrl: protectedProcedure
+    .input(
+      z.object({
+        lessonId: z.number().int(),
+        // Пустая строка или null убирают ссылку.
+        url: z.string().nullable(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const lesson = await getOwnLessonOfVerifiedTeacher(
+        ctx,
+        input.lessonId,
+        "ссылку",
+      );
+
+      if (!isDistantClassroom(lesson.Classroom?.name))
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Ссылку можно добавить только к паре в кабинете «${DISTANT_CLASSROOM_NAME}»`,
+        });
+
+      let meetingUrl: string | null;
+      try {
+        meetingUrl = normalizeMeetingUrl(input.url ?? "");
+      } catch (e) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: (e as Error).message,
+        });
       }
 
-      throw new TRPCClientError("Нет параметров для отображения расписания");
+      // Ссылка относится к одной паре: у разных групп в одно время
+      // могут быть разные встречи.
+      await ctx.db.lesson.update({
+        where: { id: input.lessonId },
+        data: { meetingUrl },
+      });
+
+      return { meetingUrl };
     }),
 
   update: protectedProcedure
@@ -212,6 +264,10 @@ export default createTRPCRouter({
                 groupId: lesson.Group?.id,
                 classroomId: lesson.classroomId,
                 shouldDisplayForStudents: input.shouldDisplayForStudents,
+                ...(lesson.teacherId !== undefined &&
+                lesson.teacherId !== data.teacherId
+                  ? { meetingUrl: null }
+                  : {}),
               },
             });
 

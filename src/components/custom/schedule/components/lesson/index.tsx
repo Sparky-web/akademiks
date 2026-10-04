@@ -9,6 +9,7 @@ import { MapPin } from "lucide-react";
 import { Slot } from "../day";
 import React from "react";
 import { Separator } from "~/components/ui/separator";
+import MeetingLink from "./meeting-link";
 
 interface LessonProps {
   slot: Slot;
@@ -95,6 +96,7 @@ export default function Lesson({ slot, type }: LessonProps) {
                     </div>
                   )}
               </div>
+              <MeetingLink lesson={lesson} />
             </div>
           </React.Fragment>
         ))}

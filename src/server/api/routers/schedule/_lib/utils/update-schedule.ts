@@ -167,11 +167,16 @@ export default async function updateSchedule(
             throw new Error("Не найдено пары для обновления");
           }
 
+          // Ссылку поставил прежний преподаватель, новому она не принадлежит.
+          const isTeacherChanged =
+            found.teacherId !== translit(lesson.to.teacher || "Не указан");
+
           const item = await db.lesson.update({
             where: {
               id: found.id,
             },
             data: {
+              ...(isTeacherChanged ? { meetingUrl: null } : {}),
               title: lesson.to.title,
               start: lesson.to.start,
               end: lesson.to.end,

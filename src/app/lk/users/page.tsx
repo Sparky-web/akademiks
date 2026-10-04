@@ -21,6 +21,7 @@ import {
 } from "~/components/ui/dialog";
 import { Label, LabelGroup } from "~/components/custom/label-group";
 import Link from "next/link";
+import { Badge } from "~/components/ui/badge";
 
 export default function Page() {
   const user = useAppSelector((e) => e.user?.user);
@@ -30,10 +31,31 @@ export default function Page() {
   const { mutateAsync, isPending } =
     api.auth.createResetPasswordToken.useMutation();
 
+  const utils = api.useUtils();
+  const {
+    mutateAsync: setTeacherVerified,
+    isPending: isVerifyPending,
+    variables: verifyVariables,
+  } = api.users.setTeacherVerified.useMutation();
+  // Блокируем только кнопку строки, по которой идёт запрос.
+  const isVerifyPendingFor = (userId: string) =>
+    isVerifyPending && verifyVariables?.userId === userId;
+
   const [resetToken, setResetToken] = useState<{
     token: string;
     email: string;
   }>();
+
+  const toggleVerified = (userId: string, verified: boolean) => {
+    setTeacherVerified({ userId, verified })
+      .then(() => {
+        toast.success(
+          verified ? "Преподаватель подтверждён" : "Подтверждение отозвано",
+        );
+        return utils.table.get.invalidate();
+      })
+      .catch((e) => toast.error(e.message));
+  };
 
   if (!user || !user.isAdmin)
     return (
@@ -49,7 +71,7 @@ export default function Page() {
       <DbTable
         key="id"
         table="User"
-        sql={`select u.id, case when u.role = 1 then 'Студент' else 'Преподаватель' end as role, u.name, u.email, u."isAdmin", t.name as "teacherName", g.title as "groupTitle", u."isNotificationsEnabled", count(ps.id) as "enabledNotificationsCount" from "User" u 
+        sql={`select u.id, case when u.role = 1 then 'Студент' else 'Преподаватель' end as role, u.role as "roleId", u.name, u.email, u."isAdmin", u."isTeacherVerified", u."teacherId", t.name as "teacherName", g.title as "groupTitle", u."isNotificationsEnabled", count(ps.id) as "enabledNotificationsCount" from "User" u 
       left join "PushSubscription" ps on ps."userId" = u.id 
       left join "Teacher" t on t.id = u."teacherId"
       left join "Group" g on g.id = u."groupId"
@@ -59,6 +81,10 @@ export default function Page() {
         }}
         options={{
           size: "base",
+          header: {
+            search: true,
+            rowCount: true,
+          },
           footer: {
             pagination: {
               enabled: false,
@@ -105,6 +131,64 @@ export default function Page() {
             accessorKey: "teacherName",
             header: "Преподаватель",
             enableSorting: true,
+          },
+          {
+            accessorKey: "isTeacherVerified",
+            header: "Подтверждён",
+            enableSorting: true,
+            size: 220,
+            cell: ({ row }) => {
+              const { roleId, teacherId, isTeacherVerified, id } =
+                row.original as unknown as {
+                  id: string;
+                  roleId: number;
+                  teacherId: string | null;
+                  isTeacherVerified: boolean;
+                };
+              if (roleId !== 2) return "—";
+
+              if (isTeacherVerified)
+                return (
+                  <div className="flex items-center gap-2 whitespace-nowrap">
+                    <Badge className="shrink-0 whitespace-nowrap">
+                      Подтверждён
+                    </Badge>
+                    <Button
+                      size={"xs"}
+                      variant={"tenary"}
+                      className="shrink-0"
+                      disabled={isVerifyPendingFor(id)}
+                      onClick={() => toggleVerified(id, false)}
+                    >
+                      Отозвать
+                    </Button>
+                  </div>
+                );
+
+              return (
+                <div className="flex items-center gap-2 whitespace-nowrap">
+                  <Badge
+                    variant={"outline"}
+                    className="shrink-0 whitespace-nowrap"
+                  >
+                    Не подтверждён
+                  </Badge>
+                  <Button
+                    size={"xs"}
+                    className="shrink-0"
+                    disabled={isVerifyPendingFor(id) || !teacherId}
+                    title={
+                      teacherId
+                        ? undefined
+                        : "Пользователь не выбрал преподавателя в профиле"
+                    }
+                    onClick={() => toggleVerified(id, true)}
+                  >
+                    Подтвердить
+                  </Button>
+                </div>
+              );
+            },
           },
           {
             accessorKey: "resetPassword",
@@ -156,7 +240,7 @@ export default function Page() {
             <LabelGroup>
               <Label>Ссылка</Label>
               <Link
-                className="text-primary break-all"
+                className="break-all text-primary"
                 href={`https://${domain}/auth/reset-password?token=${resetToken.token}`}
               >
                 {`https://${domain}/auth/reset-password?token=${resetToken.token}`}
