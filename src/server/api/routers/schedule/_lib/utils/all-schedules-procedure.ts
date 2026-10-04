@@ -15,5 +15,13 @@ export const allSchedulesProcedure = publicProcedure.query(async ({ ctx }) => {
     }),
   );
 
-  return groupsSchedules;
+  // Ссылки на видеовстречи видны только авторизованным пользователям.
+  if (ctx.session?.user) return groupsSchedules;
+  return groupsSchedules.map((schedule) => ({
+    ...schedule,
+    data: schedule.data.map((day) => ({
+      ...day,
+      lessons: day.lessons.map((lesson) => ({ ...lesson, meetingUrl: null })),
+    })),
+  }));
 });

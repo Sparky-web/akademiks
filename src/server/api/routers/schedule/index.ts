@@ -22,6 +22,8 @@ import generateReport from "./_lib/utils/generate-report";
 import { allSchedulesProcedure } from "./_lib/utils/all-schedules-procedure";
 import teachers from "../teachers";
 import getClassroomSchedule from "./_lib/utils/get-classroom-schedule";
+import { normalizeMeetingUrl } from "~/lib/utils/meeting-url";
+import { TRPCError } from "@trpc/server";
 
 export default createTRPCRouter({
   generate: protectedProcedure
@@ -57,23 +59,95 @@ export default createTRPCRouter({
     .query(async ({ input, ctx }) => {
       const isAdmin = ctx.session?.user?.isAdmin;
 
-      if (input.groupId) {
-        return await getStudentSchedule(
-          input.groupId,
-          input.weekStart,
-          isAdmin || false,
-        );
-      } else if (input.teacherId) {
-        return await getTeacherSchedule(input.teacherId, input.weekStart);
-      } else if (input.classroomId) {
-        return await getClassroomSchedule(
-          input.classroomId,
-          input.weekStart,
-          isAdmin || false,
-        );
+      const schedule = await (async () => {
+        if (input.groupId) {
+          return await getStudentSchedule(
+            input.groupId,
+            input.weekStart,
+            isAdmin || false,
+          );
+        } else if (input.teacherId) {
+          return await getTeacherSchedule(input.teacherId, input.weekStart);
+        } else if (input.classroomId) {
+          return await getClassroomSchedule(
+            input.classroomId,
+            input.weekStart,
+            isAdmin || false,
+          );
+        }
+
+        throw new TRPCClientError("Нет параметров для отображения расписания");
+      })();
+
+      // Ссылки на видеовстречи видны только авторизованным пользователям.
+      if (ctx.session?.user) return schedule;
+      return {
+        ...schedule,
+        data: schedule.data.map((day) => ({
+          ...day,
+          lessons: day.lessons.map((lesson) => ({
+            ...lesson,
+            meetingUrl: null,
+          })),
+        })),
+      };
+    }),
+
+  setMeetingUrl: protectedProcedure
+    .input(
+      z.object({
+        lessonId: z.number().int(),
+        // Пустая строка или null убирают ссылку.
+        url: z.string().nullable(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.db.user.findUnique({
+        where: { id: ctx.session.user.id },
+      });
+
+      if (!user || user.role !== 2 || !user.teacherId)
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Ссылку может добавить только преподаватель",
+        });
+      if (!user.isTeacherVerified)
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Аккаунт преподавателя ещё не подтверждён администратором",
+        });
+
+      const lesson = await ctx.db.lesson.findUnique({
+        where: { id: input.lessonId },
+      });
+      if (!lesson || lesson.teacherId !== user.teacherId)
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Можно менять ссылку только в своих парах",
+        });
+
+      let meetingUrl: string | null;
+      try {
+        meetingUrl = normalizeMeetingUrl(input.url ?? "");
+      } catch (e) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: (e as Error).message,
+        });
       }
 
-      throw new TRPCClientError("Нет параметров для отображения расписания");
+      // Одна и та же пара у нескольких групп хранится отдельными строками.
+      // Преподаватель ведёт её одной встречей, поэтому ссылка ставится на все такие строки.
+      const { count } = await ctx.db.lesson.updateMany({
+        where: {
+          teacherId: user.teacherId,
+          start: lesson.start,
+          end: lesson.end,
+        },
+        data: { meetingUrl },
+      });
+
+      return { meetingUrl, updated: count };
     }),
 
   update: protectedProcedure
@@ -212,6 +286,10 @@ export default createTRPCRouter({
                 groupId: lesson.Group?.id,
                 classroomId: lesson.classroomId,
                 shouldDisplayForStudents: input.shouldDisplayForStudents,
+                ...(lesson.teacherId !== undefined &&
+                lesson.teacherId !== data.teacherId
+                  ? { meetingUrl: null }
+                  : {}),
               },
             });
 

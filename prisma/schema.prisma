@@ -36,6 +36,8 @@ model Lesson {
   classroomId Int?
 
   shouldDisplayForStudents Boolean @default(true)
+
+  meetingUrl String?
 }
 
 model Classroom {
@@ -88,6 +90,9 @@ model User {
   password      String
   emailVerified DateTime?
   role          Int       @default(1)
+
+  isTeacherVerified Boolean   @default(false)
+  teacherVerifiedAt DateTime?
 
   isNotificationsEnabled Boolean @default(false)
 

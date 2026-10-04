@@ -15,6 +15,7 @@ import CreateLessonForm from "./forms/lesson-form";
 import { FormApi, ReactFormApi } from "@tanstack/react-form";
 import { classroom } from "googleapis/build/src/apis/classroom";
 import { isLessonsEqual } from "../../utils/is-lessons-equal";
+import MeetingLink from "./meeting-link";
 
 type LessonProps = {
   type: "student" | "teacher" | "classroom";
@@ -126,6 +127,10 @@ export default function DesktopLesson(props: LessonProps) {
                 <div className="text-xs font-medium">
                   Подгруппа {field.state.value.subgroup}
                 </div>
+              )}
+
+              {field.state.value.id && (
+                <MeetingLink lesson={field.state.value} className="mt-1" />
               )}
             </>
           )}

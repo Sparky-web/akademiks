@@ -10,6 +10,25 @@ const filtersSchema = z.array(z.object({
 }));
 
 export default createTRPCRouter({
+  setTeacherVerified: protectedProcedure
+    .input(z.object({ userId: z.string(), verified: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.session?.user?.isAdmin) throw new Error('Доступ запрещен');
+
+      const user = await db.user.findUnique({ where: { id: input.userId } });
+      if (!user) throw new Error('Пользователь не найден');
+
+      if (input.verified && (user.role !== 2 || !user.teacherId))
+        throw new Error('Пользователь не выбрал роль преподавателя и свою фамилию в расписании');
+
+      await db.user.update({
+        where: { id: input.userId },
+        data: {
+          isTeacherVerified: input.verified,
+          teacherVerifiedAt: input.verified ? new Date() : null,
+        },
+      });
+    }),
   get: protectedProcedure
     .input(
       z.object({

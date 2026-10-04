@@ -79,11 +79,27 @@ export const userRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      const current = await ctx.db.user.findUnique({
+        where: { id: ctx.session.user.id },
+      });
+
+      // Подтверждение выдаётся администратором для конкретной связки email + преподаватель.
+      // Если пользователь её меняет, подтверждение нужно получить заново.
+      const nextTeacherId = input.role === 2 ? (input.teacherId ?? null) : null;
+      const isIdentityChanged =
+        !current ||
+        current.role !== input.role ||
+        current.teacherId !== nextTeacherId ||
+        current.email !== input.email;
+
       const data = await ctx.db.user.update({
         where: {
           id: ctx.session.user.id,
         },
         data: {
+          ...(isIdentityChanged
+            ? { isTeacherVerified: false, teacherVerifiedAt: null }
+            : {}),
           role: input.role,
           groupId: input.role === 1 ? input.groupId : null,
           teacherId: input.role === 2 ? input.teacherId : null,
