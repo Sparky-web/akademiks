@@ -81,18 +81,7 @@ export default createTRPCRouter({
         throw new TRPCClientError("Нет параметров для отображения расписания");
       })();
 
-      // Ссылки на видеовстречи видны только авторизованным пользователям.
-      if (ctx.session?.user) return schedule;
-      return {
-        ...schedule,
-        data: schedule.data.map((day) => ({
-          ...day,
-          lessons: day.lessons.map((lesson) => ({
-            ...lesson,
-            meetingUrl: null,
-          })),
-        })),
-      };
+      return schedule;
     }),
 
   setMeetingUrl: protectedProcedure
