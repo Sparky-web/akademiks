@@ -128,11 +128,6 @@ model Group {
   @@index([title])
 }
 
-model Config {
-  id                      String @id @default("config")
-  parseSpreadsheetPageUrl String @default("https://urtt.ru/students/dnevnoe/raspisaniya/")
-  parseInterval           Int    @default(1200000)
-}
 
 model ErrorReport {
   id       Int      @id @default(autoincrement())
