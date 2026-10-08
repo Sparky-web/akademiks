@@ -2,9 +2,13 @@ import { AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { env } from "~/env";
 
+// Объявление висит две недели после восстановления, потом пропадает само, без релиза.
+const OUTAGE_NOTICE_UNTIL = new Date("2026-10-23T00:00:00+05:00");
+
 // Временное объявление после аварии в дата-центре (октябрь 2026): аккаунты УРТК удалены.
 export default function OutageNotice() {
   if (env.NEXT_PUBLIC_UNIVERSITY === "RGSU") return null;
+  if (Date.now() >= OUTAGE_NOTICE_UNTIL.getTime()) return null;
 
   return (
     <Alert className="border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-100 [&>svg]:text-amber-600">
