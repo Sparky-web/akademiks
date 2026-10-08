@@ -13,7 +13,6 @@ import { cn } from "~/lib/utils";
 import { useAppSelector } from "~/app/_lib/client-store";
 import CreateLessonForm from "./forms/lesson-form";
 import { FormApi, ReactFormApi } from "@tanstack/react-form";
-import { classroom } from "googleapis/build/src/apis/classroom";
 import { isLessonsEqual } from "../../utils/is-lessons-equal";
 import MeetingLink from "./meeting-link";
 
