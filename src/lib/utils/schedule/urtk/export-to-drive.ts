@@ -28,10 +28,14 @@ export type ExportResult = {
 
 /**
  * Недели выгрузки: текущая и все следующие, где есть занятия.
+ * В воскресенье текущей считается следующая неделя.
  * Если впереди занятий нет, берётся последняя неделя с занятиями.
  */
 export function pickWeeks(lessons: ExportLesson[], now: DateTime): DateTime[] {
-  const current = now.setZone(URTK_ZONE).startOf("week");
+  const local = now.setZone(URTK_ZONE);
+  const current = (
+    local.weekday === 7 ? local.plus({ days: 1 }) : local
+  ).startOf("week");
   const weeks = new Map<number, DateTime>();
   for (const lesson of lessons) {
     const week = DateTime.fromJSDate(lesson.start, { zone: URTK_ZONE }).startOf(

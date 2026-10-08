@@ -68,6 +68,20 @@ async function readSheet(xlsx: Buffer) {
   return workbook.worksheets[0]!;
 }
 
+test("в воскресенье выгружается следующая неделя", () => {
+  const sunday = DateTime.fromISO("2026-10-11T00:15", { zone });
+  const weeks = (lessons: ExportLesson[]) =>
+    pickWeeks(lessons, sunday).map((w) => w.toISODate());
+  const thisWeek = lesson({ start: at("2026-10-06T08:00") });
+
+  assert.deepEqual(
+    weeks([thisWeek, lesson({ start: at("2026-10-13T08:00") })]),
+    ["2026-10-12"],
+  );
+  // Расписание на следующую неделю ещё не загружено — остаётся уходящая неделя.
+  assert.deepEqual(weeks([thisWeek]), ["2026-10-05"]);
+});
+
 test("подгруппы группы и поток у преподавателя", async () => {
   const week = DateTime.fromISO("2026-10-05", { zone });
   const lessons = [
