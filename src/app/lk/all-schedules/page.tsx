@@ -3,6 +3,7 @@
 import { api } from "~/trpc/react";
 import SetSchedule from "./_lib/utils/set-schedule";
 import ScheduleContent from "./_lib/components/content";
+import OutageNotice from "~/components/custom/outage-notice";
 
 export default function AllSchedules() {
   const { data: teachers } = api.teachers.get.useQuery(undefined, {
@@ -19,6 +20,7 @@ export default function AllSchedules() {
 
   return (
     <div className="grid gap-6">
+      <OutageNotice />
       <SetSchedule teachers={teachers} groups={groups} classrooms={classrooms}>
         <ScheduleContent />
       </SetSchedule>
