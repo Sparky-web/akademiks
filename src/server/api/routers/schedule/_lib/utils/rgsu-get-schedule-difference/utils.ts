@@ -4,6 +4,7 @@ import DateTime from "~/lib/utils/datetime";
 import config from "~/lib/utils/schedule/config";
 import _, { findIndex } from "lodash";
 import { LessonParsed } from "~/lib/utils/schedule/flatten-schedule";
+import translit from "~/lib/utils/translit";
 
 export const groupExistingLessonsByDay = (
   lessons: Prisma.LessonGetPayload<{
@@ -221,7 +222,9 @@ const isLessonsEqual = (lesson1: LessonParsed, lesson2: LessonParsed) =>
   lesson1.type === lesson2.type &&
   "teacher" in lesson1 &&
   "teacher" in lesson2 &&
-  lesson1.teacher === lesson2.teacher &&
+  // Преподаватель хранится по транслиту, регистр имени в источнике может меняться.
+  translit(lesson1.teacher || "Не указан") ===
+    translit(lesson2.teacher || "Не указан") &&
   lesson1.classroom === lesson2.classroom &&
   lesson1.classroomAddress === lesson2.classroomAddress;
 

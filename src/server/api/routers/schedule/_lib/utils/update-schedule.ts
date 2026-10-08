@@ -48,6 +48,23 @@ export interface UpdateReport {
   notificationResult: NotificationResultItem[];
 }
 
+/**
+ * Id преподавателя не зависит от регистра, а сравнение пар зависит.
+ * Обновляем имя, иначе пары с новым написанием пересоздаются при каждой проверке.
+ */
+async function syncTeacher(teacher: string | null | undefined) {
+  const name = teacher || "Не указан";
+  const id = translit(name);
+
+  await db.teacher.upsert({
+    where: { id },
+    create: { id, name },
+    update: { name },
+  });
+
+  return id;
+}
+
 export default async function updateSchedule(
   schedule: LessonParsed[],
   shouldDisplayForStudents: boolean,
@@ -80,6 +97,7 @@ export default async function updateSchedule(
     for (let lesson of difference) {
       if (!lesson.from && lesson.to) {
         try {
+          const teacherId = await syncTeacher(lesson.to.teacher);
           const item = await db.lesson.create({
             data: {
               title: lesson.to.title,
@@ -104,15 +122,7 @@ export default async function updateSchedule(
                 },
               },
               Teacher: {
-                connectOrCreate: {
-                  where: {
-                    id: translit(lesson.to.teacher || "Не указан"),
-                  },
-                  create: {
-                    id: translit(lesson.to.teacher || "Не указан"),
-                    name: lesson.to.teacher || "Не указан",
-                  },
-                },
+                connect: { id: teacherId },
               },
               Classroom: {
                 connectOrCreate: {
@@ -167,9 +177,9 @@ export default async function updateSchedule(
             throw new Error("Не найдено пары для обновления");
           }
 
+          const teacherId = await syncTeacher(lesson.to.teacher);
           // Ссылку поставил прежний преподаватель, новому она не принадлежит.
-          const isTeacherChanged =
-            found.teacherId !== translit(lesson.to.teacher || "Не указан");
+          const isTeacherChanged = found.teacherId !== teacherId;
 
           const item = await db.lesson.update({
             where: {
@@ -199,15 +209,7 @@ export default async function updateSchedule(
                 },
               },
               Teacher: {
-                connectOrCreate: {
-                  where: {
-                    id: translit(lesson.to.teacher || "Не указан"),
-                  },
-                  create: {
-                    id: translit(lesson.to.teacher || "Не указан"),
-                    name: lesson.to.teacher || "Не указан",
-                  },
-                },
+                connect: { id: teacherId },
               },
               Classroom: {
                 connectOrCreate: {
