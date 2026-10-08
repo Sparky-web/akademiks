@@ -3,7 +3,7 @@ import { type db } from "~/server/db";
 
 /**
  * Возвращает пару, если её ведёт текущий подтверждённый преподаватель.
- * Иначе бросает FORBIDDEN. `what` — что именно правит преподаватель («ссылку», «комментарий»).
+ * Иначе бросает FORBIDDEN. `what` — что именно правит преподаватель (например, «ссылку»).
  */
 export async function getOwnLessonOfVerifiedTeacher(
   ctx: { db: typeof db; session: { user: { id: string } } },
