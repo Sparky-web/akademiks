@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { db } from "../db";
-import { GET } from "../../app/api/v1/[...path]/route";
+import { Prisma } from "@prisma/client";
+import { DELETE, GET, PATCH, POST } from "../../app/api/v1/[...path]/route";
 import { hashToken, issueToken, readBearer } from "./token";
 
 const restorers: (() => void)[] = [];
@@ -32,29 +33,40 @@ const mock = {
   },
 };
 const secret = issueToken();
+const handlers = { GET, POST, PATCH, DELETE };
 function request(
   path: string[],
   query = "",
   authorization: string | null = `Bearer ${secret.token}`,
+  method: keyof typeof handlers = "GET",
+  body?: unknown,
 ) {
-  return GET(
+  return handlers[method](
     new Request(`http://localhost/api/v1/${path.join("/")}${query}`, {
+      method,
       headers: authorization ? { Authorization: authorization } : {},
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     }),
     { params: Promise.resolve({ path }) },
   );
 }
+const notFound = () =>
+  new Prisma.PrismaClientKnownRequestError("not found", {
+    code: "P2025",
+    clientVersion: "6",
+  });
 
 test("REST authorization, counting, validation and schedule", async (t) => {
   let count = 0;
-  const update = mock.method(db.apiToken, "updateMany", async (args: any) => {
+  let scopes: string[] = [];
+  const update = mock.method(db.apiToken, "update", async (args: any) => {
     assert.deepEqual(args.where, {
       tokenHash: secret.tokenHash,
       revokedAt: null,
     });
     assert.deepEqual(args.data.requestCount, { increment: 1 });
     count++;
-    return { count: 1 };
+    return { id: "token", name: "Агент", scopes };
   });
   try {
     await t.test("random secrets and strict bearer parsing", () => {
@@ -71,7 +83,9 @@ test("REST authorization, counting, validation and schedule", async (t) => {
       assert.equal(count, 0);
     });
     await t.test("revoked token returns 401", async () => {
-      update.mock.mockImplementationOnce(async () => ({ count: 0 }));
+      update.mock.mockImplementationOnce(async () => {
+        throw notFound();
+      });
       assert.equal((await request(["groups"])).status, 401);
     });
     await t.test(
@@ -174,6 +188,162 @@ test("REST authorization, counting, validation and schedule", async (t) => {
         transaction.mock.restore();
       },
     );
+    await t.test("read-only token cannot write", async () => {
+      scopes = [];
+      const before = count;
+      const result = await request(
+        ["lessons", "batch"],
+        "",
+        undefined,
+        "POST",
+        {
+          operations: [{ op: "delete", id: 1 }],
+        },
+      );
+      assert.equal(result.status, 403);
+      assert.equal((await result.json()).error.code, "FORBIDDEN");
+      assert.equal(
+        (await request(["lessons"], "?from=2026-10-12&includeHidden=true"))
+          .status,
+        403,
+      );
+      assert.equal(count - before, 2);
+      const me = await (await request(["me"])).json();
+      assert.deepEqual(me.data.scopes, ["read"]);
+    });
+    await t.test("unsupported method on known route returns 405", async () => {
+      const result = await request(["classrooms"], "", undefined, "DELETE");
+      assert.equal(result.status, 405);
+      assert.equal(result.headers.get("allow"), "GET");
+    });
+    await t.test("batch validates every operation before writing", async () => {
+      scopes = ["schedule:write"];
+      const lessons = mock.method(db.lesson, "findMany", async () => []);
+      const teachers = mock.method(db.teacher, "findMany", async () => []);
+      const groups = mock.method(db.group, "findMany", async () => []);
+      const classrooms = mock.method(db.classroom, "findMany", async () => []);
+      const transaction = mock.method(db, "$transaction", async () => {
+        throw new Error("must not write");
+      });
+      const invalid = await request(
+        ["lessons", "batch"],
+        "",
+        undefined,
+        "POST",
+        {
+          operations: [{ op: "update", id: 1, data: { color: "red" } }],
+        },
+      );
+      assert.equal(invalid.status, 400);
+      const result = await request(
+        ["lessons", "batch"],
+        "",
+        undefined,
+        "POST",
+        {
+          operations: [
+            { op: "update", id: 1, data: { classroomId: 5 } },
+            { op: "delete", id: 1 },
+          ],
+        },
+      );
+      assert.equal(result.status, 422);
+      const details = (await result.json()).error.details;
+      assert.deepEqual(
+        details.map((item: any) => item.index).sort(),
+        [0, 1, 1],
+      );
+      for (const fn of [lessons, teachers, groups, classrooms, transaction])
+        fn.mock.restore();
+    });
+    await t.test("dry run previews and real run applies changes", async () => {
+      scopes = ["schedule:write"];
+      const existing = {
+        id: 7,
+        title: "Математика",
+        start: new Date("2026-10-12T03:30:00Z"),
+        end: new Date("2026-10-12T05:00:00Z"),
+        index: 1,
+        subgroup: null,
+        type: null,
+        meetingUrl: "https://meet.example/x",
+        shouldDisplayForStudents: true,
+        teacherId: "t",
+        groupId: "g",
+        classroomId: 1,
+        Teacher: { id: "t", name: "Teacher" },
+        Group: { id: "g", title: "Group" },
+        Classroom: { id: 1, name: "101", address: null },
+      };
+      const lessons = mock.method(db.lesson, "findMany", async () => [
+        existing,
+      ]);
+      const teachers = mock.method(db.teacher, "findMany", async () => []);
+      const groups = mock.method(db.group, "findMany", async () => []);
+      const classrooms = mock.method(db.classroom, "findMany", async () => [
+        { id: 5, name: "Дистант", address: null },
+      ]);
+      const writes: any[] = [];
+      const transaction = mock.method(db, "$transaction", async (fn: any) =>
+        fn({
+          lesson: {
+            update: async (args: any) => writes.push(args),
+          },
+        }),
+      );
+      const report = mock.method(db.report, "create", async () => ({}));
+      const body = {
+        dryRun: true,
+        operations: [{ op: "update", id: 7, data: { classroomId: 5 } }],
+      };
+      const dry = await (
+        await request(["lessons", "batch"], "", undefined, "POST", body)
+      ).json();
+      assert.equal(dry.applied, false);
+      assert.equal(writes.length, 0);
+      assert.equal(dry.results[0].after.classroom.name, "Дистант");
+      // Перенос в «Дистант» сохраняет ссылку на встречу.
+      assert.equal(dry.results[0].after.meetingUrl, "https://meet.example/x");
+      const real = await (
+        await request(["lessons", "batch"], "", undefined, "POST", {
+          ...body,
+          dryRun: false,
+        })
+      ).json();
+      assert.equal(real.applied, true);
+      assert.deepEqual(real.summary, {
+        created: 0,
+        updated: 1,
+        deleted: 0,
+        unchanged: 0,
+      });
+      assert.equal(writes[0].where.id, 7);
+      assert.equal(writes[0].data.classroomId, 5);
+      for (const fn of [
+        lessons,
+        teachers,
+        groups,
+        classrooms,
+        transaction,
+        report,
+      ])
+        fn.mock.restore();
+    });
+    await t.test("deleting a used group requires force", async () => {
+      scopes = ["groups:write"];
+      const find = mock.method(db.group, "findUnique", async () => ({
+        id: "g",
+      }));
+      const lessons = mock.method(db.lesson, "count", async () => 3);
+      const users = mock.method(db.user, "count", async () => 0);
+      const result = await request(["groups", "g"], "", undefined, "DELETE");
+      assert.equal(result.status, 409);
+      assert.deepEqual((await result.json()).error.details, {
+        lessons: 3,
+        users: 0,
+      });
+      for (const fn of [find, lessons, users]) fn.mock.restore();
+    });
     await t.test("database failure returns generic error", async () => {
       update.mock.mockImplementationOnce(async () => {
         throw new Error("private details");

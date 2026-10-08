@@ -1,161 +1,212 @@
-import { db } from "~/server/db";
-import DateTime from "~/lib/utils/datetime";
-import { hashToken, readBearer } from "~/server/rest/token";
+import type { z } from "zod";
+import { authenticate, requireScope, type ApiClient } from "~/server/rest/auth";
+import {
+  checkQuery,
+  errorResponse,
+  json,
+  readFlag,
+  readJson,
+  RestError,
+  zodDetails,
+} from "~/server/rest/http";
+import {
+  entitySchedule,
+  getLesson,
+  listClassrooms,
+  listEntities,
+  listLessons,
+  me,
+} from "~/server/rest/read";
+import {
+  applyOperations,
+  createLessonData,
+  parseBatch,
+  updateLessonData,
+} from "~/server/rest/lessons";
+import {
+  createEntry,
+  deleteEntry,
+  renameEntry,
+  type DirectoryResource,
+} from "~/server/rest/directory";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-function json(body: unknown, status = 200) {
-  return Response.json(body, {
-    status,
-    headers: {
-      "Cache-Control": "no-store",
-      ...(status === 401 ? { "WWW-Authenticate": "Bearer" } : {}),
-    },
-  });
-}
-function error(status: number, code: string, message: string) {
-  return json({ error: { code, message } }, status);
+type Method = "GET" | "POST" | "PATCH" | "DELETE";
+type Context = { params: Promise<{ path: string[] }> };
+type Handler = (
+  client: ApiClient,
+  request: Request,
+  url: URL,
+) => Promise<unknown> | unknown;
+
+// Сопоставляет путь с обработчиками по методам. null — маршрута нет.
+function route(path: string[]): Partial<Record<Method, Handler>> | null {
+  const [resource, id, action, ...rest] = path;
+  if (rest.length) return null;
+  if (resource === "me" && path.length === 1) return { GET: (c) => me(c) };
+  if (resource === "classrooms" && path.length === 1)
+    return { GET: (_, __, url) => listClassrooms(url) };
+
+  if (resource === "groups" || resource === "teachers") {
+    const scope = resource === "groups" ? "groups:write" : "teachers:write";
+    if (path.length === 1)
+      return {
+        GET: (_, __, url) => listEntities(resource, url),
+        POST: async (client, request, url) => {
+          requireScope(client, scope);
+          checkQuery(url, []);
+          return json(
+            await createEntry(resource, await readJson(request)),
+            201,
+          );
+        },
+      };
+    if (path.length === 2) return directoryItem(resource, scope, id!);
+    if (path.length === 3 && action === "schedule")
+      return { GET: (_, __, url) => entitySchedule(resource, id!, url) };
+    return null;
+  }
+
+  if (resource === "lessons") {
+    if (path.length === 1)
+      return {
+        GET: (client, _, url) => listLessons(client, url),
+        POST: async (client, request, url) => {
+          requireScope(client, "schedule:write");
+          checkQuery(url, ["dryRun", "notify"]);
+          const data = parseData(createLessonData, await readJson(request));
+          const result = await applyOperations(
+            client,
+            [{ op: "create", data }],
+            flags(url),
+          );
+          return result.applied ? json(result, 201) : result;
+        },
+      };
+    if (path.length === 2 && id === "batch")
+      return {
+        POST: async (client, request, url) => {
+          requireScope(client, "schedule:write");
+          checkQuery(url, []);
+          const { operations, ...options } = parseBatch(
+            await readJson(request),
+          );
+          return applyOperations(client, operations, options);
+        },
+      };
+    if (path.length === 2) {
+      const lessonId = /^\d{1,9}$/.test(id!) ? +id! : null;
+      if (!lessonId) return null;
+      return {
+        GET: (client, _, url) => {
+          checkQuery(url, []);
+          return getLesson(client, lessonId);
+        },
+        PATCH: async (client, request, url) => {
+          requireScope(client, "schedule:write");
+          checkQuery(url, ["dryRun", "notify"]);
+          const data = parseData(updateLessonData, await readJson(request));
+          return applyOperations(
+            client,
+            [{ op: "update", id: lessonId, data }],
+            flags(url),
+          );
+        },
+        DELETE: async (client, _, url) => {
+          requireScope(client, "schedule:write");
+          checkQuery(url, ["dryRun", "notify"]);
+          return applyOperations(
+            client,
+            [{ op: "delete", id: lessonId }],
+            flags(url),
+          );
+        },
+      };
+    }
+  }
+  return null;
 }
 
-export async function GET(
-  request: Request,
-  context: { params: Promise<{ path: string[] }> },
-) {
-  try {
-    const token = readBearer(request.headers.get("authorization"));
-    if (!token) return error(401, "UNAUTHORIZED", "Требуется Bearer-токен");
-    // Одна атомарная операция проверяет отзыв и считает запрос без потери параллельных обращений.
-    const accepted = await db.apiToken.updateMany({
-      where: { tokenHash: hashToken(token), revokedAt: null },
-      data: { requestCount: { increment: 1 }, lastUsedAt: new Date() },
-    });
-    if (!accepted.count)
-      return error(401, "UNAUTHORIZED", "Токен недействителен или отозван");
-    const { path } = await context.params;
-    const [resource, id, action] = path;
-    if (resource !== "groups" && resource !== "teachers")
-      return error(404, "NOT_FOUND", "Маршрут не найден");
-    const url = new URL(request.url);
-    if (path.length === 1) {
-      if (
-        [...url.searchParams.keys()].some(
-          (key) => key !== "limit" && key !== "offset",
-        )
-      )
-        return error(400, "INVALID_QUERY", "Допустимы limit и offset");
-      const limit = url.searchParams.get("limit") ?? "100";
-      const offset = url.searchParams.get("offset") ?? "0";
-      if (
-        !/^\d+$/.test(limit) ||
-        !/^\d+$/.test(offset) ||
-        +limit < 1 ||
-        +limit > 500 ||
-        !Number.isSafeInteger(+offset) ||
-        +offset > 2147483647
-      )
-        return error(
-          400,
-          "INVALID_QUERY",
-          "limit: 1–500, offset: 0–2147483647",
-        );
-      const args = {
-        take: +limit,
-        skip: +offset,
-        orderBy: { id: "asc" as const },
-      };
-      const [data, total] =
-        resource === "groups"
-          ? await db.$transaction([
-              db.group.findMany({ ...args, select: { id: true, title: true } }),
-              db.group.count(),
-            ])
-          : await db.$transaction([
-              db.teacher.findMany({
-                ...args,
-                select: { id: true, name: true },
-              }),
-              db.teacher.count(),
-            ]);
-      return json({
-        data,
-        pagination: { limit: +limit, offset: +offset, total },
-      });
-    }
-    if (path.length !== 3 || !id || action !== "schedule")
-      return error(404, "NOT_FOUND", "Маршрут не найден");
-    if ([...url.searchParams.keys()].some((key) => key !== "weekStart"))
-      return error(400, "INVALID_QUERY", "Допустим weekStart");
-    const value = url.searchParams.get("weekStart");
-    const start =
-      value === null
-        ? DateTime.now().startOf("week")
-        : DateTime.fromISO(value).startOf("day");
-    if (
-      (value !== null && !/^\d{4}-\d{2}-\d{2}$/.test(value)) ||
-      !start.isValid
-    )
-      return error(
-        400,
-        "INVALID_QUERY",
-        "weekStart должен быть датой YYYY-MM-DD",
-      );
-    const entity =
-      resource === "groups"
-        ? await db.group.findUnique({
-            where: { id },
-            select: { id: true, title: true },
-          })
-        : await db.teacher.findUnique({
-            where: { id },
-            select: { id: true, name: true },
-          });
-    if (!entity)
-      return error(404, "NOT_FOUND", "Группа или преподаватель не найдены");
-    const end = start.plus({ weeks: 1 });
-    const lessons = await db.lesson.findMany({
-      where: {
-        ...(resource === "groups" ? { groupId: id } : { teacherId: id }),
-        shouldDisplayForStudents: true,
-        start: { gte: start.toJSDate(), lt: end.toJSDate() },
-      },
-      orderBy: [{ start: "asc" }, { id: "asc" }],
-      select: {
-        id: true,
-        title: true,
-        start: true,
-        end: true,
-        index: true,
-        subgroup: true,
-        type: true,
-        meetingUrl: true,
-        Teacher: { select: { id: true, name: true } },
-        Group: { select: { id: true, title: true } },
-        Classroom: { select: { id: true, name: true, address: true } },
-      },
-    });
-    return json({
-      data: lessons.map(({ Teacher, Group, Classroom, ...lesson }) => ({
-        ...lesson,
-        teacher: Teacher,
-        group: Group,
-        classroom: Classroom,
-      })),
-      entity,
-      period: {
-        start: start.toISO(),
-        end: end.toISO(),
-        timezone: start.zoneName,
-      },
-    });
-  } catch {
-    return error(500, "INTERNAL_ERROR", "Не удалось обработать запрос");
-  }
+function directoryItem(
+  resource: DirectoryResource,
+  scope: "groups:write" | "teachers:write",
+  id: string,
+): Partial<Record<Method, Handler>> {
+  return {
+    PATCH: async (client, request, url) => {
+      requireScope(client, scope);
+      checkQuery(url, []);
+      return renameEntry(resource, id, await readJson(request));
+    },
+    DELETE: (client, _, url) => {
+      requireScope(client, scope);
+      checkQuery(url, ["force"]);
+      return deleteEntry(resource, id, readFlag(url, "force"));
+    },
+  };
 }
+
+function flags(url: URL) {
+  return { dryRun: readFlag(url, "dryRun"), notify: readFlag(url, "notify") };
+}
+
+function parseData<T extends z.ZodTypeAny>(
+  schema: T,
+  body: unknown,
+): z.infer<T> {
+  const parsed = schema.safeParse(body);
+  if (!parsed.success)
+    throw new RestError(
+      400,
+      "INVALID_BODY",
+      "Неверные поля пары",
+      zodDetails(parsed.error),
+    );
+  return parsed.data;
+}
+
+function handle(method: Method) {
+  return async (request: Request, context: Context) => {
+    try {
+      // Сначала авторизация: без действующего токена маршруты не раскрываются.
+      const client = await authenticate(request);
+      const { path } = await context.params;
+      const handlers = route(path);
+      if (!handlers) throw new RestError(404, "NOT_FOUND", "Маршрут не найден");
+      const handler = handlers[method];
+      if (!handler)
+        return json(
+          {
+            error: {
+              code: "METHOD_NOT_ALLOWED",
+              message: `Метод ${method} не поддерживается для этого маршрута`,
+            },
+          },
+          405,
+          { Allow: Object.keys(handlers).join(", ") },
+        );
+      const result = await handler(client, request, new URL(request.url));
+      return result instanceof Response ? result : json(result);
+    } catch (error) {
+      if (error instanceof RestError) return errorResponse(error);
+      console.error("REST API error", error);
+      return errorResponse(
+        new RestError(500, "INTERNAL_ERROR", "Не удалось обработать запрос"),
+      );
+    }
+  };
+}
+
+export const GET = handle("GET");
+export const POST = handle("POST");
+export const PATCH = handle("PATCH");
+export const DELETE = handle("DELETE");
 
 export function HEAD() {
   return new Response(null, {
     status: 405,
-    headers: { Allow: "GET", "Cache-Control": "no-store" },
+    headers: { Allow: "GET, POST, PATCH, DELETE", "Cache-Control": "no-store" },
   });
 }
