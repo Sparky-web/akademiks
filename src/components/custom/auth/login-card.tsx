@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 import { useAppDispatch } from "../../../app/_lib/client-store";
 import { setUser } from "../../../app/_lib/client-store/_lib/slices/user";
+import OutageNotice from "~/components/custom/outage-notice";
 
 export default function LoginCard() {
   const [email, setEmail] = useState("");
@@ -72,6 +73,8 @@ export default function LoginCard() {
             objectFit="contain"
           />
         </div>
+
+        <OutageNotice />
 
         <div className="grid gap-4">
           <div className="grid gap-2 md:text-center">

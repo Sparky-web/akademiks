@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { api } from "~/trpc/react";
 import SetSchedule from "./_lib/utils/set-schedule";
+import OutageNotice from "~/components/custom/outage-notice";
 
 // Рендерим только на клиенте: внутри useMediaQuery, который на сервере и клиенте
 // даёт разное значение и ломал гидрацию (React #418)
@@ -25,6 +26,7 @@ export default function AllSchedules() {
 
   return (
     <div className="grid gap-6">
+      <OutageNotice />
       <SetSchedule teachers={teachers} groups={groups} classrooms={classrooms}>
         <ScheduleContent />
       </SetSchedule>
