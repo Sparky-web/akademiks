@@ -45,7 +45,7 @@ model Classroom {
   name     String  @default("")
   isHidden Boolean @default(false)
 
-  address String?
+  address String  @default("")
 
   Lessons   Lesson[]
   Favourite Favourite[]
