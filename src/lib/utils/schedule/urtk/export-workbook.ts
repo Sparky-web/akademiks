@@ -42,12 +42,16 @@ export type ExportKind = "groups" | "teachers";
 
 type Cell = { title: string; classroom: string; caption: string };
 
+/** Подгруппа пишется явно: по порядку в ячейке её не восстановить, а одиночная пара подгруппы иначе выглядит как пара всей группы. */
+const withSubgroup = (text: string, subgroup: number | null) =>
+  subgroup ? `${text} (${subgroup} подгр.)` : text;
+
 const thin = (argb: string): Partial<ExcelJS.Border> => ({
   style: "thin",
   color: { argb },
 });
 
-/** Ячейки одной пары: подгруппы и разные занятия через пустую строку, как в таблицах колледжа. */
+/** Ячейки одной пары: подгруппы и разные занятия через пустую строку, как в таблицах колледжа, с номером подгруппы. */
 function toCell(lessons: ExportLesson[], kind: ExportKind): Cell {
   const sorted = [...lessons].sort(
     (a, b) => (a.subgroup ?? 0) - (b.subgroup ?? 0),
@@ -55,7 +59,7 @@ function toCell(lessons: ExportLesson[], kind: ExportKind): Cell {
 
   if (kind === "groups") {
     return {
-      title: sorted.map((l) => l.title).join("\n\n"),
+      title: sorted.map((l) => withSubgroup(l.title, l.subgroup)).join("\n\n"),
       classroom: sorted.map((l) => l.classroom).join("\n\n"),
       caption: sorted.map((l) => l.teacher).join("\n"),
     };
@@ -65,12 +69,12 @@ function toCell(lessons: ExportLesson[], kind: ExportKind): Cell {
   const streams = new Map<string, { lesson: ExportLesson; groups: string[] }>();
   for (const lesson of sorted) {
     const key = `${lesson.title}\u0000${lesson.classroom}`;
+    const group = withSubgroup(lesson.group, lesson.subgroup);
     const stream = streams.get(key);
     if (stream) {
-      if (!stream.groups.includes(lesson.group))
-        stream.groups.push(lesson.group);
+      if (!stream.groups.includes(group)) stream.groups.push(group);
     } else {
-      streams.set(key, { lesson, groups: [lesson.group] });
+      streams.set(key, { lesson, groups: [group] });
     }
   }
   const items = [...streams.values()];

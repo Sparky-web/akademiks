@@ -93,6 +93,8 @@ test("подгруппы группы и поток у преподавател�
     }),
     lesson({ subgroup: 1 }),
     lesson({ group: "Ис-232" }),
+    // Среда, первая пара (строки 10 и 11): пара только у второй подгруппы
+    lesson({ start: at("2026-10-07T08:00"), subgroup: 2 }),
   ];
 
   const groups = await readSheet(
@@ -107,10 +109,14 @@ test("подгруппы группы и поток у преподавател�
   assert.equal(groups.getCell("E5").value, "Ис-231");
   // Вторник, первая пара: строки 8 и 9 (понедельник — строки 6 и 7)
   assert.equal(groups.getCell("A8").value, "06.10.2026\nВТОРНИК");
-  assert.equal(groups.getCell("E8").value, "Физика\n\nИнформатика");
+  assert.equal(
+    groups.getCell("E8").value,
+    "Физика (1 подгр.)\n\nИнформатика (2 подгр.)",
+  );
   assert.equal(groups.getCell("F8").value, "101\n\nДистант");
   assert.equal(groups.getCell("E9").value, "Иванов И.И.\nПетров П.П.");
   assert.equal(groups.getCell("G8").value, "Физика");
+  assert.equal(groups.getCell("E10").value, "Физика (2 подгр.)");
 
   const teachers = await readSheet(
     await buildWorkbook(
@@ -123,7 +129,8 @@ test("подгруппы группы и поток у преподавател�
   assert.equal(teachers.getCell("D5").value, "Преподаватель:");
   assert.equal(teachers.getCell("E4").value, "Группа");
   assert.equal(teachers.getCell("E8").value, "Физика");
-  assert.equal(teachers.getCell("E9").value, "Ис-231, Ис-232");
+  assert.equal(teachers.getCell("E9").value, "Ис-231 (1 подгр.), Ис-232");
+  assert.equal(teachers.getCell("E11").value, "Ис-231 (2 подгр.)");
 });
 
 test("создаёт новые таблицы и перезаписывает существующие", async () => {
