@@ -156,4 +156,6 @@ model ApiToken {
   revokedAt    DateTime?
   lastUsedAt   DateTime?
   requestCount BigInt    @default(0)
+  // Права на запись (см. src/lib/api-scopes.ts). Пустой список — только чтение.
+  scopes       String[]  @default([])
 }

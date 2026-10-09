@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { issueToken } from "~/server/rest/token";
+import { API_SCOPES } from "~/lib/api-scopes";
 
 const adminProcedure = protectedProcedure.use(async ({ ctx, next }) => {
   const user = await ctx.db.user.findUnique({
@@ -24,6 +25,7 @@ export const apiTokensRouter = createTRPCRouter({
         revokedAt: true,
         lastUsedAt: true,
         requestCount: true,
+        scopes: true,
       },
     });
     return tokens.map((token) => ({
@@ -32,7 +34,12 @@ export const apiTokensRouter = createTRPCRouter({
     }));
   }),
   create: adminProcedure
-    .input(z.object({ name: z.string().trim().min(1).max(100) }))
+    .input(
+      z.object({
+        name: z.string().trim().min(1).max(100),
+        scopes: z.array(z.enum(API_SCOPES)).default([]),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       const { token, tokenHash, prefix } = issueToken();
       await ctx.db.apiToken.create({
@@ -40,6 +47,7 @@ export const apiTokensRouter = createTRPCRouter({
           name: input.name,
           tokenHash,
           prefix,
+          scopes: [...new Set(input.scopes)],
           createdById: ctx.session.user.id,
         },
       });
